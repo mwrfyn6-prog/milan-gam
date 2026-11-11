@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="ميلان — مكانك لأحلى جلسات الألعاب الجماعية."
+    />
+    <title>ميلان | اللعب يحلى بجمعتكم</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="ميلان، الصفحة الرئيسية">
+        <span class="brand-mark" aria-hidden="true">م</span>
+        <span>ميلان<span class="brand-dot">.</span></span>
+      </a>
+      <nav class="main-nav" aria-label="القائمة الرئيسية">
+        <a class="nav-link active" href="#games">الألعاب</a>
+        <a class="nav-link" href="#about">عن ميلان</a>
+      </nav>
+      <a class="header-cta" href="#games">اختر لعبة <span aria-hidden="true">←</span></a>
+    </header>
+
+    <main>
+      <section class="hero" id="about">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="live-dot"></span> جمعتكم تبدأ من هنا</div>
+          <h1>اللعب يحلى<br />بـ <span>جمعتكم.</span></h1>
+          <p>
+            مكان واحد يجمع ألعابكم المفضلة، يقرّبكم من بعض ويشعل جوّ التحدي.
+            اختاروا اللعبة وخلو الباقي علينا.
+          </p>
+          <a class="primary-button" href="#games">
+            اكتشف الألعاب <span aria-hidden="true">←</span>
+          </a>
+          <div class="hero-note">
+            <span class="note-avatars" aria-hidden="true"><i>م</i><i>ل</i><i>ن</i></span>
+            <span>أحلى اللحظات تبدأ مع الأصحاب</span>
+          </div>
+        </div>
+        <div class="hero-art" aria-label="رسمة توضيحية لقطع ألعاب وأوراق لعب">
+          <div class="art-glow"></div>
+          <div class="art-card art-card-back"><span>؟</span></div>
+          <div class="art-card art-card-front">
+            <span class="card-spark">✦</span>
+            <span class="card-title">مين<br />برا السالفة؟</span>
+            <span class="card-bottom">ميلان · جلسة رقم ١</span>
+          </div>
+          <span class="art-die die-one" aria-hidden="true">✦</span>
+          <span class="art-die die-two" aria-hidden="true">✹</span>
+          <span class="art-star star-one" aria-hidden="true">✳</span>
+          <span class="art-star star-two" aria-hidden="true">✦</span>
+          <div class="art-caption"><span></span> سهرتكم صارت أحلى</div>
+        </div>
+        <div class="hero-index" aria-hidden="true">01 <span></span> 04</div>
+      </section>
+
+      <section class="games-section" id="games">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">وش جوّكم اليوم؟</span>
+            <h2>اختاروا لعبتكم</h2>
+          </div>
+          <label class="search-box">
+            <span aria-hidden="true">⌕</span>
+            <input id="game-search" type="search" placeholder="دور على لعبة..." aria-label="ابحث عن لعبة" />
+          </label>
+        </div>
+
+        <div class="game-grid" id="game-grid">
+          <article class="game-card mafia-card" data-name="مافيا" data-description="عيشوا أجواء الغموض، اكتشفوا المافيا قبل ما تسيطر على المدينة." data-min-players="6" data-max-players="12">
+            <div class="card-visual visual-mafia">
+              <span class="game-icon" aria-hidden="true">♟</span>
+              <span class="visual-label">خداع &nbsp;·&nbsp; نقاش</span>
+              <span class="visual-orbit orbit-one"></span>
+              <span class="visual-orbit orbit-two"></span>
+            </div>
+            <div class="game-info">
+              <div class="game-meta"><span>للجمعة الكبيرة</span><span>٦–١٢ لاعبين</span></div>
+              <h3>مافيا</h3>
+              <p>مين البريء ومين يخفي سرّه؟ اختبروا ذكاءكم واقنعوا الباقين.</p>
+              <button class="game-button" type="button" data-game="مافيا">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
+            </div>
+          </article>
+
+          <article class="game-card outsider-card" data-name="مين برا السالفة" data-description="واحد منكم ما يعرف الموضوع — تقدرون تكشفونه بدون ما تفضحون الكلمة؟" data-min-players="3" data-max-players="10">
+            <div class="card-visual visual-outsider">
+              <span class="game-icon" aria-hidden="true">◉</span>
+              <span class="visual-label">سرّ &nbsp;·&nbsp; تخمين</span>
+              <span class="speech-bubble bubble-one">فاهمين؟</span>
+              <span class="speech-bubble bubble-two">أكيد...</span>
+            </div>
+            <div class="game-info">
+              <div class="game-meta"><span>لعبتها سوالف</span><span>٣–١٠ لاعبين</span></div>
+              <h3>مين برا السالفة؟</h3>
+              <p>واحد منكم ما يعرف الموضوع — تقدرون تكشفونه بدون ما تفضحون الكلمة؟</p>
+              <button class="game-button" type="button" data-game="مين برا السالفة؟">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
+            </div>
+          </article>
+
+          <article class="game-card codenames-card" data-name="كود نيمز" data-description="قسّموا فريقين، اربطوا الكلمات ببعض وخلو التلميحات تقودكم للفوز." data-min-players="4" data-max-players="8">
+            <div class="card-visual visual-codenames">
+              <span class="game-icon" aria-hidden="true">▦</span>
+              <span class="visual-label">فرق &nbsp;·&nbsp; كلمات</span>
+              <span class="word-tile tile-one">قمر</span>
+              <span class="word-tile tile-two">بحر</span>
+              <span class="word-tile tile-three">سرّ</span>
+            </div>
+            <div class="game-info">
+              <div class="game-meta"><span>تحدّي الفرق</span><span>٤–٨ لاعبين</span></div>
+              <h3>كود نيمز</h3>
+              <p>اربطوا الكلمات ببعض، وخلو التلميحات تقود فريقكم للفوز.</p>
+              <button class="game-button" type="button" data-game="كود نيمز">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
+            </div>
+          </article>
+
+          <article class="game-card guess-card" data-name="خمن واربح" data-description="خمّنوا الإجابة قبل الكل واجمعوا النقاط — كل سؤال فيه فرصة لقلب النتيجة." data-min-players="2" data-max-players="8">
+            <div class="card-visual visual-guess">
+              <span class="game-icon" aria-hidden="true">؟</span>
+              <span class="visual-label">سرعة &nbsp;·&nbsp; معلومات</span>
+              <span class="guess-sun"></span>
+              <span class="guess-mark">!</span>
+            </div>
+            <div class="game-info">
+              <div class="game-meta"><span>مين أسرع؟</span><span>٢–٨ لاعبين</span></div>
+              <h3>خمن واربح</h3>
+              <p>خمّنوا الإجابة قبل الكل واجمعوا النقاط — كل سؤال يقلب النتيجة.</p>
+              <button class="game-button" type="button" data-game="خمن واربح">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
+            </div>
+          </article>
+        </div>
+        <p class="empty-state" id="empty-state" hidden>ما لقينا لعبة بهذا الاسم، جرّبوا كلمة ثانية.</p>
+      </section>
+
+      <section class="bottom-banner">
+        <span class="banner-star" aria-hidden="true">✳</span>
+        <div><span class="section-kicker">كل شي أحلى مع الشلّة</span><h2>جاهزين للجولة الأولى؟</h2></div>
+        <a class="primary-button" href="#games">يلا نلعب <span aria-hidden="true">←</span></a>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand footer-brand" href="#"><span class="brand-mark" aria-hidden="true">م</span><span>ميلان<span class="brand-dot">.</span></span></a>
+      <p>اللعب يجمعنا. © <span id="year"></span> ميلان</p>
+      <a href="#about">للأعلى ↑</a>
+    </footer>
+
+    <dialog class="room-dialog" id="room-dialog" aria-labelledby="dialog-title">
+      <button class="dialog-close" id="dialog-close" type="button" aria-label="إغلاق">×</button>
+      <div class="dialog-symbol" aria-hidden="true">✦</div>
+      <span class="section-kicker">العبوا أونلاين مع أصحابكم</span>
+      <h2 id="dialog-title">لعبة ميلان</h2>
+      <p id="dialog-description">اختاروا لعبتكم وابدأوا جمعتكم.</p>
+      <form id="room-form">
+        <label for="player-name">اسمك في اللعبة</label>
+        <input id="player-name" name="name" maxlength="20" required autocomplete="nickname" placeholder="مثال: ميلان" />
+        <label for="player-count">عدد اللاعبين</label>
+        <select id="player-count" name="players"></select>
+        <div class="room-actions">
+          <button class="primary-button dialog-submit" type="submit">إنشاء غرفة <span aria-hidden="true">←</span></button>
+          <button class="secondary-button" id="show-join" type="button">عندي رمز غرفة</button>
+        </div>
+        <div class="join-fields" id="join-fields" hidden>
+          <label for="room-code-input">رمز الغرفة</label>
+          <input id="room-code-input" name="roomCode" maxlength="6" autocomplete="off" placeholder="مثال: A2BC45" />
+          <button class="primary-button dialog-submit" id="join-room" type="button">انضم للغرفة <span aria-hidden="true">←</span></button>
+        </div>
+      </form>
+      <p class="dialog-note" id="dialog-note" role="status">أدخلوا بيانات مشروع Supabase لتفعيل الغرف الأونلاين.</p>
+      <section class="room-lobby" id="room-lobby" aria-live="polite" hidden>
+        <div class="room-code-box"><span>رمز الغرفة</span><strong id="room-code"></strong><button id="copy-room-code" type="button">نسخ</button></div>
+        <h3>اللاعبون في الغرفة <span id="player-total"></span></h3>
+        <ul class="player-list" id="player-list"></ul>
+        <p class="lobby-message" id="lobby-message"></p>
+        <button class="secondary-button leave-room" id="leave-room" type="button">مغادرة الغرفة</button>
+      </section>
+    </dialog>
+  </body>
+</html>
