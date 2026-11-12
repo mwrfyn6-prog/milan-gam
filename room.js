@@ -64,6 +64,10 @@ let commandBusy = false;
 let pollTimer = null;
 let lastStatus = null;
 let roleRevealed = false;
+let roleReadComplete = false;
+let roleRevealEndsAt = 0;
+let roleRevealTimer = null;
+let roleRevealAnimationPending = false;
 let mafiaDealPlayed = false;
 let lastAnimationKey = "";
 let lastSnapshotKey = "";
@@ -152,6 +156,12 @@ function updateMafiaCountdown() {
     timer.textContent = `الوقت المتبقي ${new Intl.NumberFormat("ar").format(minutes)}:${seconds}`;
     timer.classList.toggle("is-urgent", remaining <= 15);
   });
+  document.querySelectorAll(".card-read-countdown").forEach((timer) => {
+    const deadline = Number(timer.dataset.deadlineMs);
+    const remaining = Math.max(0, Math.ceil((deadline - now) / 1000));
+    const seconds = new Intl.NumberFormat("ar", { minimumIntegerDigits: 2 }).format(remaining % 60);
+    timer.textContent = `قراءة البطاقة ${new Intl.NumberFormat("ar").format(Math.floor(remaining / 60))}:${seconds}`;
+  });
 
   const state = currentRoom?.public;
   if (!roomActive || currentRoom?.game !== "mafia" || currentRoom.status !== "playing" ||
@@ -163,6 +173,26 @@ function updateMafiaCountdown() {
   lastMafiaTimeoutKey = timeoutKey;
   lastMafiaTimeoutAttemptAt = now;
   void runCommand("mafia_timeout");
+}
+
+function finishRoleReveal() {
+  if (roleRevealTimer) window.clearTimeout(roleRevealTimer);
+  roleRevealTimer = null;
+  roleRevealed = false;
+  roleReadComplete = true;
+  roleRevealEndsAt = 0;
+  if (!currentRoom) return;
+  lastSnapshotKey = "";
+  renderRoom(currentRoom);
+}
+
+function resetRoleReveal() {
+  if (roleRevealTimer) window.clearTimeout(roleRevealTimer);
+  roleRevealTimer = null;
+  roleRevealed = false;
+  roleReadComplete = false;
+  roleRevealEndsAt = 0;
+  roleRevealAnimationPending = false;
 }
 
 function createButton(text, action, payload = {}, className = "secondary-button") {
@@ -325,11 +355,13 @@ function renderLobby(room) {
 function renderMafia(room, state, me) {
   const eliminated = state.eliminated || [];
   const isOut = eliminated.includes(currentUser.id);
+  const showRole = roleRevealed || isOut || room.status === "finished";
   const card = document.createElement("section");
   const role = roleInfo[me.role] || roleInfo.town;
-  card.className = `role-card ${roleRevealed ? `${me.role}-role role-card-open` : "back"}${mafiaDealPlayed ? "" : " deal-in"}`;
+  card.className = `role-card ${showRole ? `${me.role}-role${roleRevealAnimationPending ? " role-card-open" : ""}` : "back"}${mafiaDealPlayed ? "" : " deal-in"}`;
+  roleRevealAnimationPending = false;
   mafiaDealPlayed = true;
-  if (roleRevealed) {
+  if (showRole) {
     const seal = document.createElement("span");
     seal.className = "role-seal";
     seal.textContent = `دورك: ${role.title}`;
@@ -341,15 +373,23 @@ function renderMafia(room, state, me) {
     const description = document.createElement("p");
     description.textContent = role.description;
     card.append(seal, icon, heading, description);
+    if (roleRevealed && !isOut && room.status !== "finished") {
+      const countdown = document.createElement("span");
+      countdown.className = "card-read-countdown";
+      countdown.dataset.deadlineMs = String(roleRevealEndsAt);
+      countdown.setAttribute("role", "timer");
+      countdown.setAttribute("aria-live", "off");
+      const skipReveal = createButton("اسكب", "hide-role", {}, "card-skip-button");
+      card.append(countdown, skipReveal);
+    }
     if (me.role === "mafia" && (me.teammates || []).length) {
       const teammates = document.createElement("p");
       teammates.textContent = `زملاؤك: ${me.teammates.map((id) => getPlayerName(room, id)).join("، ")}`;
       card.append(teammates);
     }
   } else {
-    appendMessage(card, "بطاقة دورك", "eyebrow");
-    const reveal = createButton("اكشف بطاقتك", "reveal-role", {}, "primary-button");
-    card.append(reveal);
+    appendMessage(card, roleReadComplete ? "انتهى وقت قراءة البطاقة." : "بطاقة دورك", "eyebrow");
+    if (!roleReadComplete) card.append(createButton("اكشف بطاقتك", "reveal-role", {}, "primary-button"));
   }
   const roleWrap = document.createElement("div");
   roleWrap.className = "role-wrap";
@@ -362,6 +402,7 @@ function renderMafia(room, state, me) {
   }
   if (isOut) {
     appendMessage(gameContent, "تم إقصاؤك. تقدر تتابع بقية الجولة كمشاهد.", "muted-message");
+    renderMafiaSpectatorLog(room, state);
     return;
   }
 
@@ -397,6 +438,7 @@ function renderMafia(room, state, me) {
         phase.append(actions);
       }
     }
+    appendMafiaSkipControl(phase, state, "night");
     gameContent.append(phase);
   } else if (state.phase === "day") {
     const phase = createPanel("طلع النهار", state.nightEliminated
@@ -405,11 +447,7 @@ function renderMafia(room, state, me) {
     phase.classList.add("day");
     appendMafiaTimer(phase, state.phaseEndsAt);
     appendMessage(phase, "ناقشوا النتيجة ثم صوّتوا لإخراج لاعب مشتبه به.");
-    if (room.hostId === currentUser.id) {
-      phase.append(createButton("تخطي وقت النهار وابدأ التصويت", "mafia_skip_day", {}, "primary-button"));
-    } else {
-      appendMessage(phase, "بانتظار المضيف لبدء التصويت.");
-    }
+    appendMafiaSkipControl(phase, state, "day");
     if (me.lastInvestigation?.round === state.round) {
       appendMessage(phase, me.lastInvestigation.isMafia ? "نتيجة تحقيقك: اللاعب الذي اخترته من المافيا." : "نتيجة تحقيقك: اللاعب الذي اخترته ليس من المافيا.", "round-result");
     }
@@ -426,24 +464,106 @@ function renderMafia(room, state, me) {
   }
 }
 
-function renderMafiaResult(room, state) {
-  const winner = winnerNames[state.winner] || state.winner || "انتهت الجولة";
-  const panel = createPanel("النتيجة", `الفائز: ${winner}. حصل الفائزون على ٢٥ XP وبقية اللاعبين على ٥ XP.`);
+function appendMafiaSkipControl(parent, state, phase) {
+  const skipVotes = state.skipVotes || {};
+  const eliminated = state.eliminated || [];
+  const activeCount = room.players.filter((player) => !eliminated.includes(player.id)).length;
+  const voteCount = Object.keys(skipVotes).length;
+  const hasSkipped = Object.prototype.hasOwnProperty.call(skipVotes, currentUser.id);
+  const hasVoted = phase === "vote" && Object.prototype.hasOwnProperty.call(state.votes || {}, currentUser.id);
+  appendMessage(
+    parent,
+    `تخطي المرحلة يحتاج موافقة الجميع: ${new Intl.NumberFormat("ar").format(voteCount)} / ${new Intl.NumberFormat("ar").format(activeCount)}`,
+    "skip-vote-count",
+  );
+  const button = createButton(hasSkipped ? "إلغاء السكب" : "اسكب", "mafia_skip", {}, "phase-skip-button");
+  button.setAttribute("aria-pressed", String(hasSkipped));
+  if (hasVoted && !hasSkipped) {
+    button.disabled = true;
+    button.textContent = "صوتك مسجل";
+  }
+  parent.append(button);
+}
+
+function renderMafiaSpectatorLog(room, state) {
+  const panel = createPanel("سجل المافيا", "يظهر السجل للاعبين المقصيين وبعد انتهاء المباراة.");
   const roles = state.roles || {};
-  const list = document.createElement("ol");
-  list.className = "score-list";
+  const roleList = document.createElement("ul");
+  roleList.className = "mafia-role-list";
   room.players.forEach((player) => {
+    const role = roles[player.id];
+    if (!role) return;
     const item = document.createElement("li");
-    item.className = "score-item";
+    item.className = "mafia-log-role";
+    item.dataset.role = role;
     const name = document.createElement("span");
     name.textContent = player.name;
     const roleName = document.createElement("strong");
-    roleName.textContent = roleInfo[roles[player.id]]?.title || "—";
+    roleName.textContent = roleInfo[role]?.title || role;
     item.append(name, roleName);
-    list.append(item);
+    roleList.append(item);
   });
-  panel.append(list);
+  if (roleList.childElementCount) panel.append(roleList);
+  else appendMessage(panel, "الأدوار غير متاحة بعد.");
+
+  const log = Array.isArray(state.mafiaLog) ? state.mafiaLog : [];
+  if (!log.length) {
+    appendMessage(panel, "لا توجد أحداث مسجلة بعد.");
+  } else {
+    const entries = document.createElement("ol");
+    entries.className = "mafia-event-list";
+    log.forEach((entry) => {
+      const item = document.createElement("li");
+      item.className = "mafia-event";
+      if (entry.type === "day_vote") {
+        const votes = Object.entries(entry.votes || {}).map(([voter, target]) =>
+          `${getPlayerName(room, voter)} صوّت لـ ${getPlayerName(room, target)}`);
+        const round = new Intl.NumberFormat("ar").format(entry.round || 1);
+        appendMessage(item, `تصويت النهار · الجولة ${round}`, "mafia-event-title");
+        appendMessage(item, votes.length ? votes.join("، ") : "لم يسجل أحد صوتًا.");
+        appendMessage(item, entry.outcome === "tie"
+          ? "تعادل التصويت ولم يُقصَ أحد."
+          : entry.eliminated
+            ? `تم إقصاء ${getPlayerName(room, entry.eliminated)}.`
+            : "انتهى التصويت دون إقصاء.");
+      } else if (entry.type === "phase_skip") {
+        const voters = Object.keys(entry.players || {}).map((id) => getPlayerName(room, id));
+        const result = entry.phase === "vote" ? " دون إقصاء أحد" : "";
+        appendMessage(item, `تم تخطي ${phaseLabel(entry.phase)} بموافقة الجميع${result}: ${voters.join("، ")}`, "mafia-event-title");
+      } else {
+        const round = new Intl.NumberFormat("ar").format(entry.round || 1);
+        appendMessage(item, `أحداث الليل · الجولة ${round}`, "mafia-event-title");
+        const mafiaActions = Object.entries(entry.mafiaVotes || {}).map(([actor, target]) =>
+          `${getPlayerName(room, actor)} اختار ${getPlayerName(room, target)}`);
+        appendMessage(item, mafiaActions.length
+          ? `اختيارات المافيا: ${mafiaActions.join("، ")}.`
+          : "لم تسجل المافيا اختيارًا.");
+        if (entry.doctorActor && entry.doctorTarget) {
+          appendMessage(item, `الطبيب ${getPlayerName(room, entry.doctorActor)} حمى ${getPlayerName(room, entry.doctorTarget)}.`);
+        }
+        if (entry.detectiveActor && entry.detectiveTarget) {
+          appendMessage(item, `المحقق ${getPlayerName(room, entry.detectiveActor)} تحقق من ${getPlayerName(room, entry.detectiveTarget)}؛ ${entry.detectiveIsMafia ? "مافيا" : "ليس من المافيا"}.`);
+        }
+        appendMessage(item, entry.outcome === "protected"
+          ? `حُمي ${getPlayerName(room, entry.mafiaTarget)} ولم يُقصَ.`
+          : entry.outcome === "tie"
+            ? "تعادلت اختيارات المافيا ولم يُقصَ أحد."
+            : entry.killed
+              ? `قُتل ${getPlayerName(room, entry.killed)}.`
+              : "لم يُقصَ أحد في الليل.");
+      }
+      entries.append(item);
+    });
+    panel.append(entries);
+  }
   gameContent.append(panel);
+}
+
+function renderMafiaResult(room, state) {
+  const winner = winnerNames[state.winner] || state.winner || "انتهت الجولة";
+  const panel = createPanel("النتيجة", `الفائز: ${winner}. حصل الفائزون على ٢٥ XP وبقية اللاعبين على ٥ XP.`);
+  gameContent.append(panel);
+  renderMafiaSpectatorLog(room, state);
 }
 
 function renderVote(room, state, mafiaGame = false) {
@@ -470,6 +590,7 @@ function renderVote(room, state, mafiaGame = false) {
   }
   const voteCount = Object.keys(votes).length;
   appendMessage(phase, `الأصوات المسجّلة: ${new Intl.NumberFormat("ar").format(voteCount)}.`);
+  if (mafiaGame) appendMafiaSkipControl(phase, state, "vote");
   gameContent.append(phase);
 }
 
@@ -915,7 +1036,7 @@ async function runCommand(action, payload = {}) {
   if (data?.code) {
     if (action === "next_round") resultOverlay.hidden = true;
     if (action === "start" || action === "next_round") {
-      roleRevealed = false;
+      resetRoleReveal();
       mafiaDealPlayed = false;
     }
     renderRoom(data);
@@ -934,6 +1055,7 @@ function stopPolling() {
 
 function closeRoom() {
   stopPolling();
+  resetRoleReveal();
   roomActive = false;
   if (document.body.hasAttribute("data-room-standalone")) {
     window.location.assign("index.html#games");
@@ -962,7 +1084,7 @@ async function openRoom(code) {
   lastStatus = null;
   lastSnapshotKey = "";
   finishedRoomKey = "";
-  roleRevealed = false;
+  resetRoleReveal();
   mafiaDealPlayed = false;
   gameContent = lobbyContent;
   lobbyScreen.hidden = false;
@@ -1061,10 +1183,19 @@ roomRoot.addEventListener("click", (event) => {
   }
   if (action === "reveal-role") {
     roleRevealed = true;
+    roleReadComplete = false;
+    roleRevealAnimationPending = true;
+    roleRevealEndsAt = Date.now() + 10000;
+    if (roleRevealTimer) window.clearTimeout(roleRevealTimer);
+    roleRevealTimer = window.setTimeout(finishRoleReveal, 10000);
     if (currentRoom) {
       lastSnapshotKey = "";
       renderRoom(currentRoom);
     }
+    return;
+  }
+  if (action === "hide-role") {
+    finishRoleReveal();
     return;
   }
   if (action === "start" && currentRoom?.game === "outsider") {
@@ -1074,7 +1205,7 @@ roomRoot.addEventListener("click", (event) => {
     payload.seriesRounds = Number(document.querySelector("#series-round-count")?.value || 3);
   }
   if (action === "start" && currentRoom?.game === "mafia") {
-    roleRevealed = false;
+    resetRoleReveal();
     mafiaDealPlayed = false;
   }
   void runCommand(action, payload);
