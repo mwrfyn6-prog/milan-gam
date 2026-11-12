@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&family=Lilita+One&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -22,8 +22,8 @@
   <body>
     <header class="site-header">
       <a class="brand" href="#" aria-label="ميلان، الصفحة الرئيسية">
-        <span class="brand-mark" aria-hidden="true">م</span>
-        <span>ميلان<span class="brand-dot">.</span></span>
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <span>MILAN<span class="brand-dot">.</span></span>
       </a>
       <nav class="main-nav" aria-label="القائمة الرئيسية">
         <a class="nav-link active" href="#games">الألعاب</a>
@@ -36,7 +36,10 @@
       <section class="hero" id="about">
         <div class="hero-copy">
           <div class="eyebrow"><span class="live-dot"></span> جمعتكم تبدأ من هنا</div>
-          <h1>اللعب يحلى<br />بـ <span>جمعتكم.</span></h1>
+          <h1 class="hero-word" dir="ltr" aria-label="MILAN">
+            <span>M</span><span class="web-letter">I<svg class="letter-web" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 50 50 2M50 50 98 50M50 50 50 98M50 50 2 50M50 50 84 16M50 50 84 84M50 50 16 84M50 50 16 16M25 25Q50 34 75 25M25 75Q50 66 75 75M25 25Q34 50 25 75M75 25Q66 50 75 75M14 14Q50 28 86 14M14 86Q50 72 86 86M14 14Q28 50 14 86M86 14Q72 50 86 86" /></svg></span><span>L</span><span>A</span><span>N</span>
+          </h1>
+          <h2 class="hero-arabic">اللعب يحلى <span>بجمعتكم.</span></h2>
           <p>
             مكان واحد يجمع ألعابكم المفضلة، يقرّبكم من بعض ويشعل جوّ التحدي.
             اختاروا اللعبة وخلو الباقي علينا.
@@ -49,21 +52,12 @@
             <span>أحلى اللحظات تبدأ مع الأصحاب</span>
           </div>
         </div>
-        <div class="hero-art" aria-label="رسمة توضيحية لقطع ألعاب وأوراق لعب">
-          <div class="art-glow"></div>
-          <div class="art-card art-card-back"><span>؟</span></div>
-          <div class="art-card art-card-front">
-            <span class="card-spark">✦</span>
-            <span class="card-title">مين<br />برا السالفة؟</span>
-            <span class="card-bottom">ميلان · جلسة رقم ١</span>
-          </div>
-          <span class="art-die die-one" aria-hidden="true">✦</span>
-          <span class="art-die die-two" aria-hidden="true">✹</span>
-          <span class="art-star star-one" aria-hidden="true">✳</span>
-          <span class="art-star star-two" aria-hidden="true">✦</span>
-          <div class="art-caption"><span></span> سهرتكم صارت أحلى</div>
+        <div class="hero-web hero-web-corner" aria-hidden="true">
+          <svg viewBox="0 0 180 170"><path d="M0 0H178M0 0Q5 60 102 96M0 0Q36 49 127 119M0 0Q63 30 151 145M0 0Q87 13 174 166M0 0Q15 83 0 152M0 0Q49 59 0 121M0 0Q82 35 0 87M0 0Q111 10 0 52M0 0Q128-2 0 20"/></svg>
         </div>
-        <div class="hero-index" aria-hidden="true">01 <span></span> 04</div>
+        <div class="hanging-spider spider-one" aria-hidden="true"><span class="spider-thread"></span><svg viewBox="0 0 60 60"><g><path d="M22 23 10 14 4 17M20 28 8 25 2 30M21 33 9 37 5 44M24 37 16 48 17 55M38 23 50 14 56 17M40 28 52 25 58 30M39 33 51 37 55 44M36 37 44 48 43 55M30 19V10M30 40v9"/></g><ellipse cx="30" cy="27" rx="8" ry="10"/><circle cx="30" cy="39" r="5"/></svg></div>
+        <div class="hanging-spider spider-two" aria-hidden="true"><span class="spider-thread"></span><svg viewBox="0 0 60 60"><g><path d="M22 23 10 14 4 17M20 28 8 25 2 30M21 33 9 37 5 44M24 37 16 48 17 55M38 23 50 14 56 17M40 28 52 25 58 30M39 33 51 37 55 44M36 37 44 48 43 55M30 19V10M30 40v9"/></g><ellipse cx="30" cy="27" rx="8" ry="10"/><circle cx="30" cy="39" r="5"/></svg></div>
+        <div class="hero-caption"><span></span> سهرتكم صارت أحلى <span></span></div>
       </section>
 
       <section class="games-section" id="games">
@@ -151,7 +145,7 @@
     </main>
 
     <footer class="site-footer">
-      <a class="brand footer-brand" href="#"><span class="brand-mark" aria-hidden="true">م</span><span>ميلان<span class="brand-dot">.</span></span></a>
+      <a class="brand footer-brand" href="#"><span class="brand-mark" aria-hidden="true">✦</span><span>MILAN<span class="brand-dot">.</span></span></a>
       <p>اللعب يجمعنا. © <span id="year"></span> ميلان</p>
       <a href="#about">للأعلى ↑</a>
     </footer>
