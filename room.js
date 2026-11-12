@@ -51,7 +51,7 @@ const winnerNames = {
   quiz: "الفائز",
 };
 const roleInfo = {
-  mafia: { title: "المافيا", icon: "♟", description: "اختَروا هدفًا في الليل. اكسبوا ثقة المدينة نهارًا وتخلّصوا من خصومكم." },
+  mafia: { title: "المافيا", icon: "☠", description: "اختَروا هدفًا في الليل. اكسبوا ثقة المدينة نهارًا وتخلّصوا من خصومكم." },
   doctor: { title: "الطبيب", icon: "✚", description: "اختر لاعبًا تحميه هذه الليلة. إذا اختارته المافيا فلن يُقصى." },
   detective: { title: "المحقق", icon: "⌕", description: "تحقّق من لاعب في الليل؛ ستعرف سرًا إن كان من المافيا." },
   town: { title: "مواطن", icon: "✦", description: "ناقشوا نهارًا وصوّتوا لإخراج المشتبه به. انتصروا بإخراج كل أفراد المافيا." },
@@ -67,6 +67,8 @@ let roleRevealed = false;
 let mafiaDealPlayed = false;
 let lastAnimationKey = "";
 let lastSnapshotKey = "";
+let lastMafiaTimeoutKey = "";
+let lastMafiaTimeoutAttemptAt = 0;
 let roomActive = document.body.hasAttribute("data-room-standalone");
 let finishedRoomKey = "";
 
@@ -124,6 +126,43 @@ function appendMessage(parent, text, className = "muted-message") {
   message.textContent = text;
   parent.append(message);
   return message;
+}
+
+function appendMafiaTimer(parent, deadline) {
+  const timer = document.createElement("p");
+  timer.className = "phase-countdown";
+  timer.dataset.deadline = deadline || "";
+  timer.setAttribute("role", "timer");
+  timer.setAttribute("aria-live", "off");
+  parent.append(timer);
+  updateMafiaCountdown();
+}
+
+function updateMafiaCountdown() {
+  const now = Date.now();
+  document.querySelectorAll(".phase-countdown").forEach((timer) => {
+    const deadline = Date.parse(timer.dataset.deadline);
+    if (!Number.isFinite(deadline)) {
+      timer.textContent = "يتم إنهاء المرحلة...";
+      return;
+    }
+    const remaining = Math.max(0, Math.ceil((deadline - now) / 1000));
+    const minutes = Math.floor(remaining / 60);
+    const seconds = new Intl.NumberFormat("ar", { minimumIntegerDigits: 2 }).format(remaining % 60);
+    timer.textContent = `الوقت المتبقي ${new Intl.NumberFormat("ar").format(minutes)}:${seconds}`;
+    timer.classList.toggle("is-urgent", remaining <= 15);
+  });
+
+  const state = currentRoom?.public;
+  if (!roomActive || currentRoom?.game !== "mafia" || currentRoom.status !== "playing" ||
+      !["day", "night"].includes(state?.phase)) return;
+  const deadline = Date.parse(state.phaseEndsAt || "");
+  if (Number.isFinite(deadline) && deadline > now) return;
+  const timeoutKey = `${currentRoom.code}:${state.phase}:${state.round}:${state.phaseEndsAt}`;
+  if (timeoutKey === lastMafiaTimeoutKey && now - lastMafiaTimeoutAttemptAt < 5000) return;
+  lastMafiaTimeoutKey = timeoutKey;
+  lastMafiaTimeoutAttemptAt = now;
+  void runCommand("mafia_timeout");
 }
 
 function createButton(text, action, payload = {}, className = "secondary-button") {
@@ -191,6 +230,7 @@ function renderPlayers(room) {
   room.players.forEach((player) => {
     const item = document.createElement("li");
     item.className = "player-item";
+    if (room.game === "mafia") item.classList.add("mafia-player");
     item.dataset.playerId = player.id;
     if (player.id === currentUser.id) item.classList.add("is-me");
     const isOut = eliminated.includes(player.id);
@@ -287,9 +327,12 @@ function renderMafia(room, state, me) {
   const isOut = eliminated.includes(currentUser.id);
   const card = document.createElement("section");
   const role = roleInfo[me.role] || roleInfo.town;
-  card.className = `role-card ${roleRevealed ? `${me.role}-role` : "back"}${mafiaDealPlayed ? "" : " deal-in"}`;
+  card.className = `role-card ${roleRevealed ? `${me.role}-role role-card-open` : "back"}${mafiaDealPlayed ? "" : " deal-in"}`;
   mafiaDealPlayed = true;
   if (roleRevealed) {
+    const seal = document.createElement("span");
+    seal.className = "role-seal";
+    seal.textContent = `دورك: ${role.title}`;
     const icon = document.createElement("span");
     icon.className = "role-icon";
     icon.textContent = role.icon;
@@ -297,7 +340,7 @@ function renderMafia(room, state, me) {
     heading.textContent = role.title;
     const description = document.createElement("p");
     description.textContent = role.description;
-    card.append(icon, heading, description);
+    card.append(seal, icon, heading, description);
     if (me.role === "mafia" && (me.teammates || []).length) {
       const teammates = document.createElement("p");
       teammates.textContent = `زملاؤك: ${me.teammates.map((id) => getPlayerName(room, id)).join("، ")}`;
@@ -325,8 +368,9 @@ function renderMafia(room, state, me) {
   if (state.phase === "night") {
     const phase = createPanel("حلّ الليل", "اختَر إجراءك السري. لن تظهر اختياراتك للاعبين الآخرين.");
     phase.classList.add("night");
+    appendMafiaTimer(phase, state.phaseEndsAt);
     if (Number(me.actedRound) === Number(state.round)) {
-      appendMessage(phase, "تم تسجيل إجراءك؛ ننتظر بقية أدوار الليل.");
+      appendMessage(phase, "تم تسجيل إجراءك بسرية. يبدأ النهار عند انتهاء المؤقت.");
     } else {
       const activePlayers = room.players.filter((player) => !eliminated.includes(player.id));
       let targets = activePlayers;
@@ -359,9 +403,10 @@ function renderMafia(room, state, me) {
       ? `${getPlayerName(room, state.nightEliminated)} أُقصي في الليل${state.roleReveals?.[state.nightEliminated] ? ` وكان دوره: ${roleInfo[state.roleReveals[state.nightEliminated]]?.title || state.roleReveals[state.nightEliminated]}` : ""}.`
       : "لم يُقصَ أحد هذه الليلة.");
     phase.classList.add("day");
+    appendMafiaTimer(phase, state.phaseEndsAt);
     appendMessage(phase, "ناقشوا النتيجة ثم صوّتوا لإخراج لاعب مشتبه به.");
     if (room.hostId === currentUser.id) {
-      phase.append(createButton("ابدأ تصويت النهار", "begin_vote", {}, "primary-button"));
+      phase.append(createButton("تخطي وقت النهار وابدأ التصويت", "mafia_skip_day", {}, "primary-button"));
     } else {
       appendMessage(phase, "بانتظار المضيف لبدء التصويت.");
     }
@@ -837,7 +882,7 @@ async function fetchSnapshot() {
 async function runCommand(action, payload = {}) {
   if (!roomActive || !supabaseClient || !currentUser || commandBusy) return;
   commandBusy = true;
-  setMessage("جاري تسجيل الإجراء...", "");
+  if (action !== "mafia_timeout") setMessage("جاري تسجيل الإجراء...", "");
   let data;
   let error;
   try {
@@ -852,12 +897,14 @@ async function runCommand(action, payload = {}) {
       p_payload: payload,
     }));
   } catch (requestError) {
+    if (action === "mafia_timeout") lastMafiaTimeoutAttemptAt = 0;
     setMessage(requestError.message || "تعذّر الاتصال بالخادم.", "error");
     return;
   } finally {
     commandBusy = false;
   }
   if (error) {
+    if (action === "mafia_timeout") lastMafiaTimeoutAttemptAt = 0;
     setMessage(error.message || "تعذّر تنفيذ الإجراء.", "error");
     return;
   }
@@ -1058,6 +1105,7 @@ if (supabaseClient) {
   });
 }
 
+window.setInterval(updateMafiaCountdown, 1000);
 document.querySelector("#room-home-button")?.addEventListener("click", closeRoom);
 document.querySelector("#room-close")?.addEventListener("click", closeRoom);
 if (document.body.hasAttribute("data-room-standalone")) void openRoom(roomCode);

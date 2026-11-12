@@ -342,3 +342,41 @@ a { color: inherit; text-decoration: none; }
   .match-stage { min-height: 430px; }
   .match-content { min-height: 380px; }
 }
+
+.mafia-player { border-color: #36373b; background: #08090b; color: #f5f5f5; }
+.mafia-player .player-name { color: #fff; }
+.mafia-player .player-tag { border-color: #3a3b3f; background: #18191c; color: #d7d7d9; }
+.mafia-player .avatar { border-color: #3a3b3f; background: #202124; color: #fff; }
+.mafia-player.is-me { border-color: #85868b; box-shadow: 0 0 0 1px #ffffff22; }
+.mafia-player.is-out { background: #111214; }
+.role-card { position: relative; overflow: hidden; border-radius: 12px; }
+.role-card::before {
+  position: absolute;
+  inset: 9px;
+  border: 1px solid #ffffff24;
+  border-radius: 8px;
+  content: "";
+  pointer-events: none;
+}
+.role-card.back { border-color: #66686e; background: radial-gradient(circle at 50% 20%, #34363b, #101113 70%); color: #fff; }
+.role-card-open { animation: role-reveal .72s cubic-bezier(.2,.8,.2,1) both; }
+.role-seal { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border: 1px solid #ffffff35; border-radius: 99px; background: #090a0bcc; color: #fff; font-size: 11px; font-weight: 800; }
+.role-card .role-icon { position: relative; z-index: 1; display: grid; width: 62px; height: 62px; place-items: center; border: 1px solid #ffffff3d; border-radius: 50%; background: #08090b55; font-size: 31px; }
+.role-card.mafia-role { border-color: #d64c57; background: radial-gradient(circle at 50% 0, #762b33, #281316 72%); color: #fff; box-shadow: 0 14px 36px #721f2b44; }
+.role-card.mafia-role .role-icon { color: #ff9aa1; text-shadow: 0 0 18px #f0445580; }
+.role-card.doctor-role { border-color: #55a982; background: radial-gradient(circle at 50% 0, #245b45, #13251d 74%); color: #f1fff7; box-shadow: 0 14px 36px #1e704544; }
+.role-card.doctor-role .role-icon { color: #9af0c1; text-shadow: 0 0 18px #57d69a88; }
+.role-card.detective-role { border-color: #6198d3; background: radial-gradient(circle at 50% 0, #294a6b, #151d29 74%); color: #f2f8ff; box-shadow: 0 14px 36px #2865a344; }
+.role-card.detective-role .role-icon { color: #9dceff; text-shadow: 0 0 18px #64aaf188; }
+.role-card.town-role { border-color: #a4a8ae; background: radial-gradient(circle at 50% 0, #42454a, #17181b 74%); color: #fff; box-shadow: 0 14px 36px #0008; }
+.role-card.town-role .role-icon { color: #e4e6e9; }
+.role-card.mafia-role p, .role-card.doctor-role p, .role-card.detective-role p, .role-card.town-role p { color: #e2e4e8; }
+.role-card h3 { letter-spacing: .02em; }
+.phase-countdown { width: fit-content; margin: 12px 0; padding: 7px 12px; border: 1px solid #55575d; border-radius: 99px; background: #08090b; color: #fff; font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.phase-countdown.is-urgent { border-color: #df5964; color: #ff9ba3; animation: timer-pulse .9s ease-in-out infinite alternate; }
+@keyframes role-reveal { from { opacity: .35; transform: rotateY(72deg) scale(.9); filter: brightness(1.7); } to { opacity: 1; transform: rotateY(0) scale(1); filter: brightness(1); } }
+@keyframes timer-pulse { to { box-shadow: 0 0 16px #db414b55; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .role-card-open, .phase-countdown.is-urgent { animation: none; }
+}
