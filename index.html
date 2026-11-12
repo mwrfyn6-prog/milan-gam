@@ -29,7 +29,15 @@
         <a class="nav-link active" href="#games">الألعاب</a>
         <a class="nav-link" href="#about">عن ميلان</a>
       </nav>
-      <a class="header-cta" href="#games">اختر لعبة <span aria-hidden="true">←</span></a>
+      <div class="header-actions">
+        <button class="discord-button" id="discord-login" type="button">دخول Discord</button>
+        <div class="profile-bar" id="profile-bar" hidden>
+          <span id="profile-name"></span>
+          <strong><span id="profile-xp">0</span> XP</strong>
+          <button id="discord-logout" type="button" aria-label="تسجيل الخروج">خروج</button>
+        </div>
+        <a class="header-cta" href="#games">اختر لعبة <span aria-hidden="true">←</span></a>
+      </div>
     </header>
 
     <main>
@@ -84,7 +92,7 @@
               <div class="game-meta"><span>للجمعة الكبيرة</span><span>٦–١٢ لاعبين</span></div>
               <h3>مافيا</h3>
               <p>مين البريء ومين يخفي سرّه؟ اختبروا ذكاءكم واقنعوا الباقين.</p>
-              <button class="game-button" type="button" data-game="مافيا">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
+              <button class="game-button" type="button" data-game="مافيا" data-game-id="mafia">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
             </div>
           </article>
 
@@ -99,7 +107,7 @@
               <div class="game-meta"><span>لعبتها سوالف</span><span>٣–١٠ لاعبين</span></div>
               <h3>مين برا السالفة؟</h3>
               <p>واحد منكم ما يعرف الموضوع — تقدرون تكشفونه بدون ما تفضحون الكلمة؟</p>
-              <button class="game-button" type="button" data-game="مين برا السالفة؟">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
+              <button class="game-button" type="button" data-game="مين برا السالفة؟" data-game-id="outsider">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
             </div>
           </article>
 
@@ -115,7 +123,7 @@
               <div class="game-meta"><span>تحدّي الفرق</span><span>٤–٨ لاعبين</span></div>
               <h3>كود نيمز</h3>
               <p>اربطوا الكلمات ببعض، وخلو التلميحات تقود فريقكم للفوز.</p>
-              <button class="game-button" type="button" data-game="كود نيمز">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
+              <button class="game-button" type="button" data-game="كود نيمز" data-game-id="codenames">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
             </div>
           </article>
 
@@ -130,11 +138,21 @@
               <div class="game-meta"><span>مين أسرع؟</span><span>٢–٨ لاعبين</span></div>
               <h3>خمن واربح</h3>
               <p>خمّنوا الإجابة قبل الكل واجمعوا النقاط — كل سؤال يقلب النتيجة.</p>
-              <button class="game-button" type="button" data-game="خمن واربح">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
+              <button class="game-button" type="button" data-game="خمن واربح" data-game-id="guess">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
             </div>
           </article>
         </div>
         <p class="empty-state" id="empty-state" hidden>ما لقينا لعبة بهذا الاسم، جرّبوا كلمة ثانية.</p>
+      </section>
+
+      <section class="leaderboard-section" id="leaderboard">
+        <div class="section-heading">
+          <div><span class="section-kicker">أبطال ميلان</span><h2>لوحة المتصدرين</h2></div>
+          <span class="leaderboard-caption">النقاط تزيد مع كل فوز</span>
+        </div>
+        <ol class="leaderboard-list" id="leaderboard-list">
+          <li class="leaderboard-placeholder">سجّل دخولك وابدأ اللعب لتظهر النتائج هنا.</li>
+        </ol>
       </section>
 
       <section class="bottom-banner">
@@ -157,8 +175,6 @@
       <h2 id="dialog-title">لعبة ميلان</h2>
       <p id="dialog-description">اختاروا لعبتكم وابدأوا جمعتكم.</p>
       <form id="room-form">
-        <label for="player-name">اسمك في اللعبة</label>
-        <input id="player-name" name="name" maxlength="20" required autocomplete="nickname" placeholder="مثال: ميلان" />
         <label for="player-count">عدد اللاعبين</label>
         <select id="player-count" name="players"></select>
         <div class="room-actions">
@@ -177,6 +193,8 @@
         <h3>اللاعبون في الغرفة <span id="player-total"></span></h3>
         <ul class="player-list" id="player-list"></ul>
         <p class="lobby-message" id="lobby-message"></p>
+        <button class="primary-button start-game" id="start-game" type="button" hidden>ابدأ الجولة</button>
+        <div class="game-board" id="game-board"></div>
         <button class="secondary-button leave-room" id="leave-room" type="button">مغادرة الغرفة</button>
       </section>
     </dialog>
