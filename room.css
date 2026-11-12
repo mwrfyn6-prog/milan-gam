@@ -202,6 +202,53 @@ a { color: inherit; text-decoration: none; }
 .role-card.mafia-role p { color: #eee; }
 .role-card.doctor-role { background: #dcedb4; }
 .role-card.detective-role { background: #d8dfe8; }
+.role-card.outsider-secret-card {
+  width: min(100%, 520px);
+  min-height: 190px;
+  margin: 8px auto 28px;
+  border-radius: 16px;
+  text-align: center;
+  animation: outsider-card-arrive .6s cubic-bezier(.2,.8,.2,1) both;
+}
+.role-card.outsider-secret-card h3 { font-size: 20px; }
+.role-card.outsider-secret-card p { color: #f5f5f5; font-size: 18px; font-weight: 800; }
+.role-card.outsider-spy-card {
+  border-color: #9c62e8;
+  background: radial-gradient(circle at 15% 15%, #7138a8, #29204f 58%, #122d42);
+  box-shadow: 0 14px 36px #7138a844;
+}
+.role-card.outsider-crew-card {
+  border-color: #40b99c;
+  background: radial-gradient(circle at 85% 12%, #287a71, #184d56 55%, #293564);
+  box-shadow: 0 14px 36px #287a7144;
+}
+.outsider-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: min(100%, 560px);
+  margin: 22px auto 4px;
+}
+.outsider-choice {
+  min-height: 76px;
+  border: 1px solid #ffffff44;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  box-shadow: 0 8px 20px #0004;
+  transition: transform .18s, filter .18s, box-shadow .18s;
+}
+.outsider-choice:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.02);
+  filter: brightness(1.16);
+  box-shadow: 0 12px 25px #0006;
+}
+.outsider-choice-1 { background: linear-gradient(135deg, #a44370, #71388f); }
+.outsider-choice-2 { background: linear-gradient(135deg, #287d88, #31568f); }
+.outsider-choice-3 { background: linear-gradient(135deg, #b2762f, #a54f38); }
+.outsider-choice-4 { background: linear-gradient(135deg, #527d3e, #28766f); }
+@keyframes outsider-card-arrive { from { opacity: 0; transform: translateY(14px) rotate(-2deg); } to { opacity: 1; transform: translateY(0) rotate(0); } }
 .deal-in { animation: deal-in .7s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes deal-in { from { opacity: 0; transform: rotateY(80deg) translateY(28px) scale(.8); } to { opacity: 1; transform: rotateY(0) translateY(0) scale(1); } }
 .phase-card { margin: 18px 0; padding: 18px; border: 1px solid #888; border-radius: 3px; background: #efefec; }
@@ -263,6 +310,8 @@ a { color: inherit; text-decoration: none; }
   .word-board { grid-template-columns: repeat(2, minmax(90px, 1fr)); }
   .answer-form { flex-direction: column; }
   .answer-form button { min-height: 42px; }
+  .outsider-options { gap: 8px; }
+  .outsider-choice { min-height: 64px; font-size: 14px; }
   .room-footer { gap: 10px; font-size: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -378,7 +427,7 @@ a { color: inherit; text-decoration: none; }
 @keyframes timer-pulse { to { box-shadow: 0 0 16px #db414b55; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .role-card-open, .phase-countdown.is-urgent { animation: none; }
+  .role-card-open, .phase-countdown.is-urgent, .role-card.outsider-secret-card { animation: none; }
 }
 
 .role-card { min-height: 270px; padding: 28px 22px; }

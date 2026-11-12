@@ -165,7 +165,7 @@ function updateMafiaCountdown() {
 
   const state = currentRoom?.public;
   if (!roomActive || currentRoom?.game !== "mafia" || currentRoom.status !== "playing" ||
-      !["day", "night"].includes(state?.phase)) return;
+      !["reveal", "day", "night"].includes(state?.phase)) return;
   const deadline = Date.parse(state.phaseEndsAt || "");
   if (Number.isFinite(deadline) && deadline > now) return;
   const timeoutKey = `${currentRoom.code}:${state.phase}:${state.round}:${state.phaseEndsAt}`;
@@ -332,7 +332,7 @@ function renderLobby(room) {
     appendMessage(gameContent, `المضيف حدّد ${new Intl.NumberFormat("ar").format(room.public.matchLimit)} مباريات في الغرفة.`);
   }
 
-  const minimumPlayers = { mafia: 5, outsider: 3, codenames: 4, guess: 2 }[room.game];
+  const minimumPlayers = { mafia: 2, outsider: 3, codenames: 4, guess: 3 }[room.game];
   if (room.hostId === currentUser.id) {
     const actions = document.createElement("div");
     actions.className = "game-actions";
@@ -355,7 +355,7 @@ function renderLobby(room) {
 function renderMafia(room, state, me) {
   const eliminated = state.eliminated || [];
   const isOut = eliminated.includes(currentUser.id);
-  const showRole = roleRevealed || isOut || room.status === "finished";
+  const showRole = state.phase === "reveal" || roleRevealed || isOut || room.status === "finished";
   const card = document.createElement("section");
   const role = roleInfo[me.role] || roleInfo.town;
   card.className = `role-card ${showRole ? `${me.role}-role${roleRevealAnimationPending ? " role-card-open" : ""}` : "back"}${mafiaDealPlayed ? "" : " deal-in"}`;
@@ -379,7 +379,7 @@ function renderMafia(room, state, me) {
       countdown.dataset.deadlineMs = String(roleRevealEndsAt);
       countdown.setAttribute("role", "timer");
       countdown.setAttribute("aria-live", "off");
-      const skipReveal = createButton("اسكب", "hide-role", {}, "card-skip-button");
+      const skipReveal = createButton("إخفاء البطاقة", "hide-role", {}, "card-skip-button");
       card.append(countdown, skipReveal);
     }
     if (me.role === "mafia" && (me.teammates || []).length) {
@@ -406,7 +406,12 @@ function renderMafia(room, state, me) {
     return;
   }
 
-  if (state.phase === "night") {
+  if (state.phase === "reveal") {
+    const phase = createPanel("تعرّفوا على أدواركم", "تبدأ اللعبة تلقائيًا بعد ١٠ ثوانٍ، أو صوّتوا جميعًا لتبدأ فورًا.");
+    appendMafiaTimer(phase, state.phaseEndsAt);
+    appendMafiaSkipControl(phase, state, "reveal");
+    gameContent.append(phase);
+  } else if (state.phase === "night") {
     const phase = createPanel("حلّ الليل", "اختَر إجراءك السري. لن تظهر اختياراتك للاعبين الآخرين.");
     phase.classList.add("night");
     appendMafiaTimer(phase, state.phaseEndsAt);
@@ -473,10 +478,15 @@ function appendMafiaSkipControl(parent, state, phase) {
   const hasVoted = phase === "vote" && Object.prototype.hasOwnProperty.call(state.votes || {}, currentUser.id);
   appendMessage(
     parent,
-    `تخطي المرحلة يحتاج موافقة الجميع: ${new Intl.NumberFormat("ar").format(voteCount)} / ${new Intl.NumberFormat("ar").format(activeCount)}`,
+    `أصوات تخطي المرحلة: ${new Intl.NumberFormat("ar").format(voteCount)} / ${new Intl.NumberFormat("ar").format(activeCount)}`,
     "skip-vote-count",
   );
-  const button = createButton(hasSkipped ? "إلغاء السكب" : "اسكب", "mafia_skip", {}, "phase-skip-button");
+  const button = createButton(
+    hasSkipped ? "إلغاء صوت التخطي" : "صوّت لتخطي المرحلة",
+    "mafia_skip",
+    {},
+    "phase-skip-button",
+  );
   button.setAttribute("aria-pressed", String(hasSkipped));
   if (hasVoted && !hasSkipped) {
     button.disabled = true;
@@ -597,7 +607,7 @@ function renderVote(room, state, mafiaGame = false) {
 function renderOutsider(room, state, me) {
   const roleCard = createPanel(me.spy ? "أنت خارج السالفة" : "كلمتك السرية", me.spy
     ? "حاول تكتشف الكلمة من النقاش من دون ما ينكشف أمرك."
-    : `الكلمة هي: ${me.word || "—"}`, "role-card");
+    : `الكلمة هي: ${me.word || "—"}`, `role-card outsider-secret-card${me.spy ? " outsider-spy-card" : " outsider-crew-card"}`);
   if (state.phase !== "result") gameContent.append(roleCard);
 
   if (state.phase === "discussion") {
@@ -609,10 +619,17 @@ function renderOutsider(room, state, me) {
     renderVote(room, state);
   } else if (state.phase === "spy_guess") {
     const phase = createPanel("فرصة أخيرة", state.guessingSpy === currentUser.id
-      ? "تم التصويت عليك. اكتب تخمينك للكلمة؛ إجابة صحيحة تمنح فريقك الفوز."
+      ? "تم التصويت عليك! اختر الكلمة الصحيحة من بين أربع بطاقات. إذا عرفتها تفوز."
       : `${getPlayerName(room, state.guessingSpy)} يحاول تخمين الكلمة.`);
     if (state.guessingSpy === currentUser.id) {
-      phase.append(createForm("guess_word", "اكتب تخمين الكلمة", "word", "إرسال التخمين"));
+      const choices = document.createElement("div");
+      choices.className = "outsider-options";
+      (me.wordOptions || []).forEach((word, index) => {
+        const button = createButton(word, "guess_word", { word }, `outsider-choice outsider-choice-${index + 1}`);
+        choices.append(button);
+      });
+      if (choices.childElementCount === 4) phase.append(choices);
+      else appendMessage(phase, "تعذّر تحميل خيارات الكلمة. حدّث الصفحة وحاول مرة أخرى.", "error-message");
     }
     gameContent.append(phase);
   } else if (state.phase === "result") {
@@ -920,6 +937,7 @@ function phaseLabel(phase) {
   return ({
     night: "الليل",
     day: "النهار",
+    reveal: "التعرّف على الأدوار",
     discussion: "النقاش",
     vote: "التصويت",
     spy_guess: "تخمين الكلمة",
