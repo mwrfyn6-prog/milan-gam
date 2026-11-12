@@ -465,3 +465,198 @@ a { color: inherit; text-decoration: none; }
 .mafia-event { display: block; line-height: 1.8; }
 .mafia-event p { margin: 3px 0; color: #c5c6c9; }
 .mafia-event .mafia-event-title { color: #fff; font-weight: 800; }
+
+.mafia-role-settings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 8px 14px;
+  margin: 22px 0;
+  padding: 18px;
+  border: 1px solid var(--room-border);
+  border-radius: 8px;
+  background: var(--room-panel-raised);
+}
+.mafia-role-settings > .eyebrow,
+.mafia-role-settings > .muted-message { grid-column: 1 / -1; margin: 0; }
+.mafia-role-settings .setting-label { width: 100%; margin-top: 0; }
+.mafia-role-settings .setting-label select { min-height: 40px; }
+.mafia-card-wrap { display: grid; place-items: center; margin: 12px auto 28px; perspective: 1200px; }
+.mafia-flip-card { width: min(100%, 340px); height: 410px; }
+.mafia-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform .85s cubic-bezier(.2,.8,.2,1);
+}
+.mafia-flip-card.is-flipped .mafia-flip-inner { transform: rotateY(180deg); }
+.mafia-card-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  overflow: hidden;
+  padding: 28px;
+  border: 1px solid #5b5e66;
+  border-radius: 22px;
+  box-shadow: 0 22px 55px #0008, inset 0 0 0 7px #ffffff08;
+  backface-visibility: hidden;
+  text-align: center;
+}
+.mafia-card-back {
+  color: #fff;
+  background:
+    radial-gradient(circle at 50% 35%, #44474e, transparent 48%),
+    repeating-linear-gradient(45deg, #1d1e22 0 12px, #24262b 12px 24px);
+}
+.mafia-card-back::before, .mafia-card-back::after {
+  position: absolute;
+  inset: 13px;
+  border: 1px solid #ffffff20;
+  border-radius: 15px;
+  content: "";
+  pointer-events: none;
+}
+.mafia-card-back::after { inset: 20px; border-style: dashed; opacity: .55; }
+.mafia-card-mark { margin: 0; color: #f3d37a; font-size: 58px !important; text-shadow: 0 0 24px #f3d37a66; }
+.mafia-card-brand { margin: 0; color: #fff !important; font-size: 29px !important; font-weight: 900; letter-spacing: 3px; }
+.mafia-card-hint { margin: 10px 0 0; color: #d3d4d7 !important; font-size: 12px !important; }
+.mafia-card-front { transform: rotateY(180deg); color: #fff; background: radial-gradient(circle at 50% 0, #42454a, #17181b 74%); }
+.mafia-card-front.mafia-role { border-color: #d64c57; background: radial-gradient(circle at 50% 0, #762b33, #281316 72%); }
+.mafia-card-front.doctor-role { border-color: #55a982; background: radial-gradient(circle at 50% 0, #245b45, #13251d 74%); }
+.mafia-card-front.detective-role { border-color: #6198d3; background: radial-gradient(circle at 50% 0, #294a6b, #151d29 74%); }
+.mafia-card-front .role-icon { display: grid; width: 72px; height: 72px; place-items: center; border: 1px solid #ffffff3d; border-radius: 50%; background: #08090b55; font-size: 36px; }
+.mafia-card-front h2 { margin: 2px 0; font-size: 29px; }
+.mafia-card-front p { max-width: 260px; margin: 0; color: #e2e4e8; font-size: 13px; line-height: 1.8; }
+.mafia-card-front .mafia-teammates { color: #ffc0c5; font-weight: 700; }
+.mafia-ready-button { margin-top: 14px; min-width: 145px; }
+.mafia-targets { margin-top: 14px; }
+.mafia-morning-alert {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 11px;
+  max-width: 600px;
+  margin: 24px auto;
+  padding: 30px 20px;
+  overflow: hidden;
+  border: 1px solid #9a3038;
+  border-radius: 16px;
+  background: radial-gradient(circle at 50% 0, #61252c, #1c1114 72%);
+  box-shadow: 0 16px 42px #651d2738;
+  text-align: center;
+  animation: morning-arrive .55s cubic-bezier(.2,.8,.2,1) both;
+}
+.mafia-morning-blood { color: #f2727b; font-size: 42px; text-shadow: 0 0 22px #f0445580; }
+.mafia-morning-title { margin: 0; color: #ffc4c8; font-size: 12px !important; font-weight: 800; }
+.mafia-morning-player { display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 8px; border: 1px solid #ffffff24; border-radius: 999px; background: #090a0b88; }
+.mafia-morning-avatar { width: 42px; height: 42px; border-color: #d85b65; }
+.mafia-morning-player strong { font-size: 14px; }
+.mafia-morning-copy { margin: 0; color: #f1e4e5; font-size: 13px !important; }
+.mafia-morning-alert .phase-countdown { margin: 5px 0 0; }
+.match-screen[data-game="mafia"] .match-layout { grid-template-columns: minmax(0, 1fr); }
+.match-screen[data-game="mafia"] .match-players { display: none; }
+@keyframes morning-arrive { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 500px) {
+  .mafia-flip-card { height: 370px; }
+  .mafia-card-face { padding: 23px 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mafia-flip-inner, .mafia-morning-alert { transition: none; animation: none; }
+}
+
+.players-panel {
+  border-color: #494c53;
+  background:
+    radial-gradient(circle at 100% 0, #9da2ad12, transparent 38%),
+    linear-gradient(145deg, #17191d, #0b0c0e 72%);
+  box-shadow: 0 14px 36px #0008, inset 0 0 0 1px #ffffff08;
+}
+.player-list { gap: 10px; }
+.player-list .player-item {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid #50535b;
+  border-radius: 9px;
+  background-color: #050506;
+  background-image:
+    radial-gradient(circle at 8% 50%, transparent 0 13px, #d9dce112 13.5px 14.5px, transparent 15px 28px, #d9dce10d 28.5px 29.5px, transparent 30px),
+    repeating-conic-gradient(from 20deg at 8% 50%, transparent 0deg 24deg, #d9dce10a 24.5deg 25.5deg, transparent 26deg 44deg),
+    linear-gradient(115deg, #050506, #191b20);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px #ffffff08, 0 5px 16px #0005;
+  animation: web-list-arrive .42s cubic-bezier(.2,.8,.2,1) both;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+.player-item:nth-child(2) { animation-delay: 45ms; }
+.player-item:nth-child(3) { animation-delay: 90ms; }
+.player-item:nth-child(4) { animation-delay: 135ms; }
+.player-item:nth-child(5) { animation-delay: 180ms; }
+.player-item:nth-child(6) { animation-delay: 225ms; }
+.player-item:nth-child(7) { animation-delay: 270ms; }
+.player-list .player-item:hover {
+  transform: translateY(-2px);
+  border-color: #9da2ad;
+  box-shadow: inset 0 0 0 1px #ffffff10, 0 9px 22px #0008, 0 0 15px #aab0bb17;
+  filter: brightness(1.12);
+}
+.player-item.is-me { border-color: #c5c8cf; box-shadow: 0 0 0 1px #ffffff20, 0 5px 16px #0005; }
+.player-item.is-out { opacity: .62; }
+.player-info, .player-item > .avatar { position: relative; z-index: 1; }
+.player-name, .player-item .player-name { color: #fff !important; text-shadow: 0 1px 5px #000; }
+.player-badges { color: #c4c7ce; }
+.player-tag { border-color: #666a73; background: linear-gradient(135deg, #25272c, #111214); color: #e0e2e7; }
+.player-item .avatar { border-color: #727680; background: linear-gradient(145deg, #777b83, #292b30); color: #fff; }
+.score-item, .mafia-log-role, .mafia-event, .mafia-role-settings, .phase-card, .question-card {
+  border-color: #4a4d54;
+  background-color: #15171b;
+  background-image:
+    radial-gradient(circle at 100% 0, #c0c4ce10 0 1px, transparent 1.5px 35px, #c0c4ce08 35.5px 36.5px, transparent 37px),
+    linear-gradient(135deg, #1d1f24, #101114 68%, #191b20);
+  box-shadow: inset 0 0 0 1px #ffffff06, 0 7px 20px #0004;
+}
+.score-item, .mafia-log-role, .mafia-event { color: #f4f5f7; }
+.score-item > span, .mafia-log-role > span { color: #f4f5f7; }
+.mafia-event p { color: #d3d5da; }
+.game-actions button {
+  border-color: #60636b;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #292b31, #111214 72%);
+  color: #f5f6f8;
+  box-shadow: inset 0 0 0 1px #ffffff08, 0 5px 14px #0005;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+.game-actions button:hover:not(:disabled) {
+  transform: translateY(-3px);
+  border-color: #b7bbc4;
+  box-shadow: inset 0 0 0 1px #ffffff12, 0 10px 24px #0008, 0 0 18px #b6bbc51c;
+  filter: brightness(1.16);
+}
+.outsider-choice {
+  border-color: #b0b3bc;
+  box-shadow: inset 0 0 0 1px #ffffff18, 0 8px 20px #0006;
+}
+.word-card {
+  border-color: #646770;
+  border-radius: 8px;
+  background-image: linear-gradient(135deg, #ffffff0a, transparent 52%), linear-gradient(145deg, #24262b, #111214);
+  color: #f5f6f8;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.word-card:hover:not(:disabled) {
+  transform: translateY(-3px);
+  border-color: #c1c4cb;
+  box-shadow: 0 9px 20px #0008;
+}
+@keyframes web-list-arrive {
+  from { opacity: 0; transform: translateY(9px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-item { animation: none; transition: none; }
+  .player-item:hover, .game-actions button:hover:not(:disabled), .word-card:hover:not(:disabled) { transform: none; }
+}
