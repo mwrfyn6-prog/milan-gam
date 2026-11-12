@@ -20,13 +20,24 @@ const loginButton = document.querySelector("#discord-login");
 const profileBar = document.querySelector("#profile-bar");
 const profileName = document.querySelector("#profile-name");
 const profileXp = document.querySelector("#profile-xp");
+const profileAvatar = document.querySelector("#profile-avatar");
+const profileAvatarFallback = document.querySelector("#profile-avatar-fallback");
 const leaderboardList = document.querySelector("#leaderboard-list");
+const roomScreenTitle = document.querySelector("#room-screen-title");
+const roomSettings = document.querySelector("#room-settings");
+const outsiderSetting = document.querySelector("#outsider-setting");
+const outsiderCountSelect = document.querySelector("#outsider-count");
+const quizRoundSetting = document.querySelector("#quiz-round-setting");
+const quizRoundSelect = document.querySelector("#quiz-round-count");
+const roomSettingHint = document.querySelector("#room-setting-hint");
+const roomWaitingMessage = document.querySelector("#room-waiting-message");
+const roomScreenNotice = document.querySelector("#room-screen-notice");
 const supabaseFactory = window.supabase && window.supabase.createClient;
 const config = window.MILAN_SUPABASE_CONFIG;
 const winnerLabels = {
   mafia: "المافيا",
   town: "أهل المدينة",
-  spy: "الجاسوس",
+  spy: "اللاعبون خارج السالفة",
   crew: "أهل السالفة",
   red: "الفريق الأحمر",
   blue: "الفريق الأزرق",
@@ -43,10 +54,12 @@ const supabaseClient =
 let currentSession = null;
 let currentProfile = null;
 let activeRoomCode = null;
+let currentRoom = null;
 let selectedGame = null;
 let pollTimer = null;
 let polling = false;
 let lastFinishedCode = null;
+let configuredRoomCode = null;
 
 document.querySelector("#year").textContent = new Date().getFullYear();
 
@@ -63,6 +76,12 @@ searchInput.addEventListener("input", () => {
 });
 
 function showStatus(message, isError = false) {
+  if (dialog.classList.contains("is-in-room")) {
+    roomScreenNotice.textContent = message;
+    roomScreenNotice.className = isError ? "room-screen-notice error-message" : "room-screen-notice";
+    roomScreenNotice.hidden = false;
+    return;
+  }
   dialogNote.textContent = message;
   dialogNote.className = isError ? "dialog-note error-message" : "dialog-note";
   dialogNote.hidden = false;
@@ -82,17 +101,67 @@ function authErrorMessage(error) {
 async function loadProfile(user) {
   const { data, error } = await supabaseClient
     .from("milan_profiles")
-    .select("user_id,display_name,xp")
+    .select("user_id,display_name,xp,avatar_url")
     .eq("user_id", user.id)
     .maybeSingle();
   if (error) throw error;
   if (!data) throw new Error("ملفك الشخصي ما تجهّز. أعد تسجيل الدخول بعد إعداد قاعدة البيانات.");
-  currentProfile = data;
-  profileName.textContent = data.display_name;
+  const metadata = user.user_metadata || {};
+  const displayName = data.display_name === "لاعب ميلان"
+    ? metadata.global_name || metadata.full_name || (metadata.custom_claims && metadata.custom_claims.global_name) || metadata.name || data.display_name
+    : data.display_name;
+  currentProfile = {
+    ...data,
+    display_name: displayName,
+    avatar_url: data.avatar_url || metadata.avatar_url || metadata.picture || null,
+  };
+  profileName.textContent = displayName;
   profileXp.textContent = new Intl.NumberFormat("ar").format(data.xp);
+  setProfileAvatar(currentProfile.avatar_url, displayName);
   profileBar.hidden = false;
   loginButton.hidden = true;
   await loadLeaderboard();
+}
+
+function isSafeAvatarUrl(value) {
+  if (!value) return false;
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function setProfileAvatar(url, name) {
+  const hasAvatar = isSafeAvatarUrl(url);
+  profileAvatarFallback.textContent = (name || "م").trim().charAt(0) || "م";
+  profileAvatar.hidden = !hasAvatar;
+  profileAvatarFallback.hidden = hasAvatar;
+  profileAvatar.onerror = () => {
+    profileAvatar.hidden = true;
+    profileAvatarFallback.hidden = false;
+  };
+  if (hasAvatar) profileAvatar.src = url;
+  else profileAvatar.removeAttribute("src");
+}
+
+function createAvatar(url, name) {
+  const avatar = document.createElement("span");
+  avatar.className = "avatar-shell player-avatar";
+  const fallback = document.createElement("span");
+  fallback.textContent = (name || "م").trim().charAt(0) || "م";
+  fallback.setAttribute("aria-hidden", "true");
+  avatar.append(fallback);
+  if (isSafeAvatarUrl(url)) {
+    const image = document.createElement("img");
+    image.src = url;
+    image.alt = "";
+    image.referrerPolicy = "no-referrer";
+    image.loading = "lazy";
+    image.addEventListener("error", () => image.remove(), { once: true });
+    avatar.prepend(image);
+  }
+  return avatar;
 }
 
 async function loadLeaderboard() {
@@ -134,6 +203,8 @@ async function handleSession(session) {
   currentSession = session;
   currentProfile = null;
   profileBar.hidden = true;
+  profileAvatar.hidden = true;
+  profileAvatarFallback.hidden = false;
   loginButton.hidden = false;
   if (!session) {
     leaderboardList.replaceChildren();
@@ -167,7 +238,10 @@ loginButton.addEventListener("click", async () => {
   }
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: "discord",
-    options: { redirectTo: `${window.location.origin}${window.location.pathname}` },
+    options: {
+      redirectTo: `${window.location.origin}${window.location.pathname}`,
+      scopes: "identify email",
+    },
   });
   if (error) window.alert(authErrorMessage(error));
 });
@@ -236,10 +310,16 @@ function stopRoomPolling() {
 
 function resetRoomView() {
   activeRoomCode = null;
+  currentRoom = null;
   lastFinishedCode = null;
+  configuredRoomCode = null;
+  dialog.classList.remove("is-in-room");
+  dialog.setAttribute("aria-labelledby", "dialog-title");
   roomForm.hidden = false;
   lobby.hidden = true;
   joinFields.hidden = true;
+  roomSettings.hidden = true;
+  roomWaitingMessage.hidden = true;
   gameBoard.replaceChildren();
   showStatus("اختر لعبة وأنشئ غرفة خاصة أو انضم برمز.", false);
 }
@@ -263,19 +343,28 @@ function addActionButton(label, action, payload = {}, className = "secondary-but
 }
 
 function renderRoom(room) {
+  currentRoom = room;
   roomCodeDisplay.textContent = room.code;
   roomForm.hidden = true;
   lobby.hidden = false;
   dialogNote.hidden = true;
+  roomScreenNotice.hidden = true;
+  dialog.classList.add("is-in-room");
+  dialog.setAttribute("aria-labelledby", "room-screen-title");
 
   playerList.replaceChildren();
   room.players.forEach((player) => {
     const item = document.createElement("li");
+    const identity = document.createElement("span");
+    identity.className = "player-identity";
     const name = document.createElement("span");
-    const badge = document.createElement("span");
+    name.className = "player-name";
     name.textContent = player.name + (player.isHost ? " · المضيف" : "");
-    badge.textContent = player.id === currentSession.user.id ? "أنت" : `${player.xp} XP`;
-    item.append(name, badge);
+    const badge = document.createElement("span");
+    badge.className = "player-xp";
+    badge.textContent = `${new Intl.NumberFormat("ar").format(player.xp)} XP${player.id === currentSession.user.id ? " · أنت" : ""}`;
+    identity.append(createAvatar(player.avatarUrl, player.name), name);
+    item.append(identity, badge);
     playerList.append(item);
   });
   playerTotal.textContent = `(${new Intl.NumberFormat("ar").format(room.players.length)}/${new Intl.NumberFormat("ar").format(room.maxPlayers)})`;
@@ -293,17 +382,58 @@ function renderRoom(room) {
     result: "انتهت الجولة",
   };
   const state = room.public;
+  roomScreenTitle.textContent = gameNames[room.game];
+  if (configuredRoomCode !== room.code) {
+    configuredRoomCode = room.code;
+    outsiderCountSelect.replaceChildren();
+    const maxOutsiders = Math.max(1, Math.floor(room.maxPlayers / 3));
+    for (let count = 1; count <= maxOutsiders; count += 1) {
+      const option = document.createElement("option");
+      option.value = String(count);
+      option.textContent = `${new Intl.NumberFormat("ar").format(count)} ${count === 1 ? "لاعب" : "لاعبين"}`;
+      outsiderCountSelect.append(option);
+    }
+    outsiderCountSelect.value = "1";
+    quizRoundSelect.replaceChildren();
+    for (let count = 3; count <= 10; count += 1) {
+      const option = document.createElement("option");
+      option.value = String(count);
+      option.textContent = `${new Intl.NumberFormat("ar").format(count)} أسئلة`;
+      quizRoundSelect.append(option);
+    }
+    quizRoundSelect.value = "5";
+  }
   if (room.status === "finished" && lastFinishedCode !== room.code) {
     lastFinishedCode = room.code;
     void loadProfile(currentSession.user);
   }
   lobbyMessage.textContent = room.status === "finished"
     ? `${phaseNames.result} · ${state.winner === "quiz" ? "تم احتساب النقاط" : `الفائز: ${winnerLabels[state.winner] || state.winner}`}`
-    : `${gameNames[room.game]} · ${phaseNames[state.phase] || state.phase}`;
-  startButton.hidden = room.status !== "lobby" || room.hostId !== currentSession.user.id;
-  const minimumPlayers = { mafia: 6, outsider: 3, codenames: 4, guess: 2 };
-  startButton.disabled = room.players.length < minimumPlayers[room.game];
-  document.querySelector("#leave-room").hidden = room.status !== "lobby";
+    : `${gameNames[room.game]} · ${phaseNames[state.phase] || state.phase}${room.game === "guess" && room.status === "playing" ? ` · السؤال ${state.round} من ${state.roundLimit}` : ""}${room.game === "outsider" && room.status === "playing" ? ` · خارج السالفة: ${state.spyCount}` : ""}`;
+  const isHost = room.hostId === currentSession.user.id;
+  const isLobby = room.status === "lobby";
+  roomSettings.hidden = !isLobby || !isHost;
+  outsiderSetting.hidden = room.game !== "outsider";
+  quizRoundSetting.hidden = room.game !== "guess";
+  startButton.hidden = !isLobby || !isHost;
+  roomWaitingMessage.hidden = !isLobby || isHost;
+  const minimumPlayers = { mafia: 5, outsider: 3, codenames: 4, guess: 2 };
+  const enoughPlayers = room.players.length >= minimumPlayers[room.game];
+  const maxOutsidersForPlayers = Math.max(1, Math.floor(room.players.length / 3));
+  const validOutsiderCount = room.game !== "outsider" || Number(outsiderCountSelect.value) <= maxOutsidersForPlayers;
+  startButton.disabled = !enoughPlayers || !validOutsiderCount;
+  roomSettingHint.textContent = !enoughPlayers
+    ? `يلزم ${minimumPlayers[room.game]} لاعبين على الأقل لبدء اللعبة.`
+    : room.game === "outsider" && !validOutsiderCount
+    ? `إعداد ${outsiderCountSelect.value} خارج السالفة يحتاج ${Number(outsiderCountSelect.value) * 3} لاعبين على الأقل.`
+    : room.game === "guess"
+      ? "عدد الأسئلة قابل للتعديل من ٣ إلى ١٠."
+      : room.game === "outsider"
+        ? `يمكن اختيار ${maxOutsidersForPlayers} خارج السالفة حسب عدد اللاعبين الحالي.`
+        : "";
+  roomWaitingMessage.textContent = enoughPlayers
+    ? "بانتظار المضيف لضبط الإعدادات وبدء الجولة."
+    : `تحتاج اللعبة ${minimumPlayers[room.game]} لاعبين على الأقل للبدء.`;
   renderGameBoard(room);
 }
 
@@ -363,7 +493,7 @@ function renderOutsider(room, state, me) {
     room.players.filter((player) => player.id !== currentSession.user.id).forEach((player) => {
       addActionButton(`صوّت على ${player.name}`, "vote", { target: player.id });
     });
-  } else if (state.phase === "spy_guess" && me.spy) {
+  } else if (state.phase === "spy_guess" && state.guessingSpy === currentSession.user.id) {
     const form = document.createElement("form");
     form.className = "game-answer-form";
     const input = document.createElement("input");
@@ -381,7 +511,7 @@ function renderOutsider(room, state, me) {
     });
     gameBoard.append(form);
   } else if (state.phase === "spy_guess") {
-    addBoardMessage("الجاسوس يحاول تخمين الكلمة قبل إعلان النتيجة.");
+    addBoardMessage("اللاعب المصوّت عليه يحاول تخمين الكلمة قبل إعلان النتيجة.");
   }
 }
 
@@ -437,7 +567,7 @@ function renderQuiz(room, state) {
   const sortedScores = room.players
     .map((player) => ({ name: player.name, score: Number(scores[player.id] || 0) }))
     .sort((a, b) => b.score - a.score);
-  addBoardMessage(`السؤال ${new Intl.NumberFormat("ar").format(state.round)} من ٥`);
+  addBoardMessage(`السؤال ${new Intl.NumberFormat("ar").format(state.round)} من ${new Intl.NumberFormat("ar").format(state.roundLimit || 5)}`);
   const question = document.createElement("h3");
   question.className = "quiz-question";
   question.textContent = state.question.q;
@@ -508,7 +638,7 @@ gameGrid.addEventListener("click", (event) => {
 roomForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const room = await runRoomCommand("create", { game: selectedGame, maxPlayers: Number(playerCount.value) });
-  if (room) startRoomPolling();
+  if (room && room.code) window.location.assign(`room.html?code=${encodeURIComponent(room.code)}`);
 });
 
 document.querySelector("#show-join").addEventListener("click", () => {
@@ -524,11 +654,20 @@ document.querySelector("#join-room").addEventListener("click", async () => {
     return;
   }
   const room = await runRoomCommand("join", { code: roomCode });
-  if (room) startRoomPolling();
+  if (room && room.code) window.location.assign(`room.html?code=${encodeURIComponent(room.code)}`);
 });
 
 startButton.addEventListener("click", async () => {
-  await runRoomCommand("start");
+  await runRoomCommand("start", {
+    payload: {
+      spyCount: Number(outsiderCountSelect.value),
+      rounds: Number(quizRoundSelect.value),
+    },
+  });
+});
+
+outsiderCountSelect.addEventListener("change", () => {
+  if (currentRoom) renderRoom(currentRoom);
 });
 
 document.querySelector("#copy-room-code").addEventListener("click", async () => {
