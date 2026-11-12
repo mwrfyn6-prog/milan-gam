@@ -528,3 +528,142 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#discord-login[hidden], #profile-bar[hidden], #start-game[hidden] { display: none !important; }
+.discord-button {
+  min-height: 39px;
+  padding: 0 14px;
+  border: 1px solid #111;
+  border-radius: 3px;
+  background: #111;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.discord-button:hover { background: #393939; }
+.discord-button:disabled { opacity: .5; cursor: not-allowed; }
+.profile-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+}
+.profile-bar strong { white-space: nowrap; }
+.profile-bar button {
+  padding: 5px 8px;
+  border: 1px solid #888;
+  border-radius: 3px;
+  background: transparent;
+  color: #111;
+  font: inherit;
+  cursor: pointer;
+}
+.leaderboard-section {
+  width: min(1160px, calc(100% - 64px));
+  margin: 0 auto 75px;
+}
+.leaderboard-caption { color: #555; font-size: 12px; }
+.leaderboard-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: leaders;
+}
+.leaderboard-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #777;
+  background: #d7d7d4;
+  font-size: 12px;
+  counter-increment: leaders;
+}
+.leaderboard-list li strong { white-space: nowrap; }
+.leaderboard-list .leaderboard-placeholder {
+  grid-column: 1 / -1;
+  justify-content: center;
+  color: #555;
+}
+.game-board {
+  display: grid;
+  gap: 10px;
+  margin: 17px 0;
+}
+.game-status, .private-role, .quiz-question {
+  margin: 0;
+  line-height: 1.8;
+}
+.private-role {
+  padding: 12px;
+  border: 1px dashed #111;
+  background: #c9c9c5;
+  font-weight: 800;
+}
+.start-game { width: 100%; }
+.game-answer-form {
+  display: grid;
+  gap: 9px;
+}
+.game-answer-form input, .game-answer-form select {
+  width: 100%;
+  min-height: 43px;
+  padding: 0 11px;
+  border: 1px solid #999;
+  border-radius: 3px;
+  background: #efefec;
+  color: #111;
+  font: inherit;
+}
+.word-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+.word-card {
+  min-height: 57px;
+  padding: 7px 4px;
+  border: 1px solid #111;
+  border-radius: 3px;
+  background: #efefec;
+  color: #111;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.word-card:disabled { cursor: default; opacity: 1; }
+.word-card.revealed.red { background: #777; color: #fff; }
+.word-card.revealed.blue { background: #555; color: #fff; }
+.word-card.revealed.neutral { background: #b6b6b2; }
+.word-card.revealed.assassin { background: #050505; color: #fff; }
+.quiz-question { font-size: 18px; }
+.quiz-options { display: grid; gap: 8px; }
+.quiz-options button { width: 100%; }
+.round-scores { display: grid; gap: 5px; margin: 0; padding-inline-start: 22px; }
+.round-scores li { padding: 4px; font-size: 12px; }
+
+@media (max-width: 600px) {
+  .site-header { gap: 6px; }
+  .header-actions { gap: 6px; }
+  .discord-button { min-height: 35px; padding: 0 8px; font-size: 10px; white-space: nowrap; }
+  .header-cta { padding: 8px; font-size: 10px; }
+  .profile-bar { gap: 5px; font-size: 9px; }
+  .profile-bar button { padding: 4px 5px; font-size: 9px; }
+  .leaderboard-section { width: calc(100% - 36px); margin-bottom: 52px; }
+  .leaderboard-list { grid-template-columns: 1fr; }
+  .leaderboard-caption { font-size: 10px; }
+  .word-board { gap: 5px; }
+  .word-card { min-height: 48px; font-size: 10px; }
+}
