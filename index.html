@@ -15,9 +15,11 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <link id="room-stylesheet" rel="stylesheet" href="room.css" media="not all" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="supabase-config.js"></script>
     <script src="app.js" defer></script>
+    <script src="room.js" defer></script>
   </head>
   <body>
     <header class="site-header">
@@ -44,7 +46,7 @@
       </div>
     </header>
 
-    <main>
+    <main id="home-content">
       <section class="hero" id="about">
         <div class="hero-copy">
           <div class="eyebrow"><span class="live-dot"></span> جمعتكم تبدأ من هنا</div>
@@ -83,6 +85,19 @@
             <input id="game-search" type="search" placeholder="دور على لعبة..." aria-label="ابحث عن لعبة" />
           </label>
         </div>
+
+        <form class="quick-join-card" id="quick-join-form">
+          <div>
+            <span class="section-kicker">أصحابك سبقوك؟</span>
+            <h3>ادخل غرفة برمز</h3>
+          </div>
+          <label class="quick-join-input">
+            <span class="visually-hidden">رمز الغرفة</span>
+            <input id="quick-join-code" maxlength="6" autocomplete="off" placeholder="مثال: A2BC45" aria-label="رمز الغرفة" />
+          </label>
+          <button class="secondary-button" type="submit">انضم للغرفة <span aria-hidden="true">←</span></button>
+          <p id="quick-join-status" class="quick-join-status" role="status" hidden></p>
+        </form>
 
         <div class="game-grid" id="game-grid">
           <article class="game-card mafia-card" data-name="مافيا" data-description="مافيا بطبيب ومحقق ومواطنين: أدوار سرية، ليل ونهار، وتصويت حتى يفوز فريق." data-min-players="5" data-max-players="12">
@@ -159,12 +174,93 @@
         </ol>
       </section>
 
-      <section class="bottom-banner">
-        <span class="banner-star" aria-hidden="true">✳</span>
-        <div><span class="section-kicker">كل شي أحلى مع الشلّة</span><h2>جاهزين للجولة الأولى؟</h2></div>
-        <a class="primary-button" href="#games">يلا نلعب <span aria-hidden="true">←</span></a>
-      </section>
     </main>
+
+    <div class="room-view" id="room-view" hidden>
+      <div class="room-shell">
+        <header class="room-header">
+          <a class="brand" href="index.html" aria-label="العودة إلى ميلان">
+            <span class="brand-mark" aria-hidden="true">✦</span>
+            <span>MILAN<span class="brand-dot">.</span></span>
+          </a>
+          <div class="room-heading">
+            <span id="game-label" class="eyebrow">غرفة ميلان</span>
+            <h1 id="room-title">جاري فتح الغرفة...</h1>
+          </div>
+          <div class="room-code-box">
+            <span>رمز الغرفة</span>
+            <strong id="room-code">------</strong>
+            <button id="copy-code" class="icon-button" type="button" aria-label="نسخ رمز الغرفة">نسخ</button>
+          </div>
+        </header>
+
+        <p class="status-banner" id="status-message" role="status" aria-live="polite">جاري الاتصال بالغرفة...</p>
+
+        <section class="room-screen lobby-screen" id="lobby-screen">
+          <main class="room-layout lobby-layout">
+            <section class="game-panel lobby-panel" aria-live="polite">
+              <div class="game-content" id="game-content"></div>
+            </section>
+            <aside class="players-panel lobby-players">
+              <div class="panel-heading">
+                <div>
+                  <span class="eyebrow">قبل البداية</span>
+                  <h2>قائمة اللاعبين</h2>
+                </div>
+                <span class="player-count" id="room-player-count" data-player-count></span>
+              </div>
+              <ul class="player-list" id="player-list" data-player-list></ul>
+              <button class="leave-button" id="leave-room" data-leave-room type="button" hidden>مغادرة الغرفة</button>
+            </aside>
+          </main>
+        </section>
+
+        <section class="room-screen match-screen" id="match-screen" hidden aria-live="polite">
+          <div class="match-toolbar">
+            <div>
+              <span class="match-kicker">المباراة جارية</span>
+              <strong id="match-round-label"></strong>
+            </div>
+            <p id="match-phase-label"></p>
+          </div>
+          <main class="match-layout">
+            <section class="game-panel match-stage">
+              <div class="match-stage-heading">
+                <span id="match-game-label"></span>
+                <span class="match-live-mark"><i></i> مباشر</span>
+              </div>
+              <div class="game-content match-content" id="match-game-content"></div>
+            </section>
+            <aside class="players-panel match-players">
+              <div class="panel-heading">
+                <div>
+                  <span class="eyebrow">داخل الجولة</span>
+                  <h2>المشاركون</h2>
+                </div>
+                <span class="player-count" id="match-player-count" data-player-count></span>
+              </div>
+              <ul class="player-list" id="match-player-list" data-player-list></ul>
+              <button class="leave-button" id="leave-match" data-leave-room type="button" hidden>مغادرة المباراة</button>
+            </aside>
+          </main>
+        </section>
+        <footer class="room-footer">
+          <span>اللعب يجمعنا</span>
+          <button id="room-login" class="login-button" type="button" hidden>تسجيل الدخول عبر Discord</button>
+          <button id="room-home-button" class="room-home-button" type="button">العودة للألعاب</button>
+        </footer>
+      </div>
+
+      <div class="result-overlay" id="result-overlay" hidden>
+        <div class="result-card">
+          <span class="result-spark" aria-hidden="true">✦</span>
+          <p class="eyebrow">نهاية الجولة</p>
+          <h2 id="result-title"></h2>
+          <p id="result-description"></p>
+          <button class="primary-button" id="result-close" type="button">عرض النتيجة</button>
+        </div>
+      </div>
+    </div>
 
     <footer class="site-footer">
       <a class="brand footer-brand" href="#"><span class="brand-mark" aria-hidden="true">✦</span><span>MILAN<span class="brand-dot">.</span></span></a>
@@ -183,60 +279,9 @@
         <select id="player-count" name="players"></select>
         <div class="room-actions">
           <button class="primary-button dialog-submit" type="submit">إنشاء غرفة <span aria-hidden="true">←</span></button>
-          <button class="secondary-button" id="show-join" type="button">عندي رمز غرفة</button>
-        </div>
-        <div class="join-fields" id="join-fields" hidden>
-          <label for="room-code-input">رمز الغرفة</label>
-          <input id="room-code-input" name="roomCode" maxlength="6" autocomplete="off" placeholder="مثال: A2BC45" />
-          <button class="primary-button dialog-submit" id="join-room" type="button">انضم للغرفة <span aria-hidden="true">←</span></button>
         </div>
       </form>
       <p class="dialog-note" id="dialog-note" role="status">أدخلوا بيانات مشروع Supabase لتفعيل الغرف الأونلاين.</p>
-      <section class="room-lobby" id="room-lobby" aria-live="polite" hidden>
-        <header class="room-screen-header">
-          <div class="room-screen-title">
-            <span class="section-kicker">غرفة ميلان</span>
-            <h2 id="room-screen-title">لعبة ميلان</h2>
-          </div>
-          <div class="room-code-box">
-            <span>رمز الغرفة</span>
-            <strong id="room-code"></strong>
-            <button id="copy-room-code" type="button">نسخ</button>
-          </div>
-        </header>
-        <p class="room-screen-notice" id="room-screen-notice" role="status" hidden></p>
-        <div class="room-screen-layout">
-          <main class="room-main-panel">
-            <section class="room-state-card">
-              <p class="lobby-message" id="lobby-message"></p>
-              <div class="room-settings" id="room-settings" hidden>
-                <p class="room-settings-title">إعدادات الجولة</p>
-                <label class="room-setting" id="outsider-setting" hidden>
-                  عدد اللاعبين خارج السالفة
-                  <select id="outsider-count"></select>
-                </label>
-                <label class="room-setting" id="quiz-round-setting" hidden>
-                  عدد الأسئلة
-                  <select id="quiz-round-count"></select>
-                </label>
-                <p class="room-setting-hint" id="room-setting-hint"></p>
-                <button class="primary-button start-game" id="start-game" type="button" hidden>ابدأ الجولة</button>
-              </div>
-              <p class="room-waiting-message" id="room-waiting-message" hidden></p>
-            </section>
-            <section class="room-game-panel" aria-live="polite">
-              <div class="game-board" id="game-board"></div>
-            </section>
-          </main>
-          <aside class="room-sidebar">
-            <section class="players-panel">
-              <h3>اللاعبون في الغرفة <span id="player-total"></span></h3>
-              <ul class="player-list" id="player-list"></ul>
-            </section>
-            <button class="secondary-button leave-room" id="leave-room" type="button">مغادرة الغرفة</button>
-          </aside>
-        </div>
-      </section>
     </dialog>
   </body>
 </html>

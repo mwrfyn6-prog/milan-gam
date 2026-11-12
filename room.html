@@ -3,17 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#17151d" />
+    <meta name="theme-color" content="#090a0b" />
     <title>غرفة اللعب | ميلان</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&family=Lilita+One&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="room.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="supabase-config.js"></script>
     <script src="room.js" defer></script>
   </head>
-  <body>
+  <body data-room-standalone="true">
     <div class="room-shell">
       <header class="room-header">
         <a class="brand" href="index.html" aria-label="العودة إلى ميلان">
@@ -33,22 +34,54 @@
 
       <p class="status-banner" id="status-message" role="status" aria-live="polite">جاري الاتصال بالغرفة...</p>
 
-      <main class="room-layout">
-        <section class="game-panel" aria-live="polite">
-          <div class="game-content" id="game-content"></div>
-        </section>
-        <aside class="players-panel">
-          <div class="panel-heading">
-            <div>
-              <span class="eyebrow">فريق اللعب</span>
-              <h2>اللاعبون</h2>
+      <section class="room-screen lobby-screen" id="lobby-screen">
+        <main class="room-layout lobby-layout">
+          <section class="game-panel lobby-panel" aria-live="polite">
+            <div class="game-content" id="game-content"></div>
+          </section>
+          <aside class="players-panel lobby-players">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">قبل البداية</span>
+                <h2>قائمة اللاعبين</h2>
+              </div>
+              <span class="player-count" id="player-count" data-player-count></span>
             </div>
-            <span class="player-count" id="player-count"></span>
+            <ul class="player-list" id="player-list" data-player-list></ul>
+            <button class="leave-button" id="leave-room" data-leave-room type="button" hidden>مغادرة الغرفة</button>
+          </aside>
+        </main>
+      </section>
+
+      <section class="room-screen match-screen" id="match-screen" hidden aria-live="polite">
+        <div class="match-toolbar">
+          <div>
+            <span class="match-kicker">المباراة جارية</span>
+            <strong id="match-round-label"></strong>
           </div>
-          <ul class="player-list" id="player-list"></ul>
-          <button class="leave-button" id="leave-room" type="button" hidden>مغادرة الغرفة</button>
-        </aside>
-      </main>
+          <p id="match-phase-label"></p>
+        </div>
+        <main class="match-layout">
+          <section class="game-panel match-stage">
+            <div class="match-stage-heading">
+              <span id="match-game-label"></span>
+              <span class="match-live-mark"><i></i> مباشر</span>
+            </div>
+            <div class="game-content match-content" id="match-game-content"></div>
+          </section>
+          <aside class="players-panel match-players">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">داخل الجولة</span>
+                <h2>المشاركون</h2>
+              </div>
+              <span class="player-count" id="match-player-count" data-player-count></span>
+            </div>
+            <ul class="player-list" id="match-player-list" data-player-list></ul>
+            <button class="leave-button" id="leave-match" data-leave-room type="button" hidden>مغادرة المباراة</button>
+          </aside>
+        </main>
+      </section>
       <footer class="room-footer">
         <span>اللعب يجمعنا</span>
         <button id="room-login" class="login-button" type="button" hidden>تسجيل الدخول عبر Discord</button>

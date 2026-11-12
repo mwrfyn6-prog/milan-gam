@@ -796,3 +796,95 @@ body {
   .room-sidebar .leave-room { margin-top: 0; }
   .room-game-panel { padding: 0 14px 18px; }
 }
+
+.quick-join-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 250px) auto;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 18px 20px;
+  border: 1px solid #777;
+  background: #d7d7d4;
+}
+.quick-join-card h3 { margin: 3px 0 0; font-size: 17px; }
+.quick-join-input input {
+  width: 100%;
+  min-height: 43px;
+  padding: 0 12px;
+  border: 1px solid #888;
+  border-radius: 3px;
+  background: #efefec;
+  color: #111;
+  direction: ltr;
+  font: inherit;
+  letter-spacing: 2px;
+}
+.quick-join-card .secondary-button {
+  min-height: 43px;
+  padding: 0 16px;
+  border: 1px solid #111;
+  border-radius: 3px;
+  background: #111;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+.quick-join-status {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #333;
+  font-size: 11px;
+}
+.quick-join-status.error { color: #9c2929; font-weight: 700; }
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+.leaderboard-list li { justify-content: space-between; }
+.leaderboard-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+.leaderboard-rank { width: 20px; flex: 0 0 auto; text-align: center; font-weight: 800; }
+.leaderboard-avatar { width: 34px; height: 34px; }
+.leaderboard-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.room-active { min-height: 100vh; background: #0b0c0e; }
+.room-active > .site-header,
+.room-active > #home-content,
+.room-active > .site-footer { display: none !important; }
+.room-view { min-height: 100vh; background: #0b0c0e; color-scheme: dark; }
+.room-view[hidden] { display: none !important; }
+.room-view .room-shell { padding-bottom: 12px; }
+.room-home-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--room-text);
+  cursor: pointer;
+  font-family: inherit;
+}
+.room-close-button {
+  padding: 8px 13px;
+  border: 1px solid var(--room-border);
+  border-radius: 7px;
+  background: var(--room-panel-raised);
+  color: var(--room-text);
+  cursor: pointer;
+  font: inherit;
+}
+.room-close-button:hover { border-color: var(--room-accent, #f5f5f5); }
+
+@media (max-width: 700px) {
+  .quick-join-card { grid-template-columns: 1fr; gap: 9px; padding: 14px; }
+  .quick-join-card h3 { font-size: 15px; }
+}
