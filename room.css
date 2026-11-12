@@ -119,6 +119,18 @@ a { color: inherit; text-decoration: none; }
 .player-tag { padding: 1px 5px; border: 1px solid #bbb; border-radius: 2px; background: #e3e3e0; }
 .player-tag.out { color: var(--room-red); }
 .player-tag.safe { color: var(--room-green); }
+.player-kick-button {
+  min-width: 46px;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid #a34a52;
+  border-radius: 7px;
+  background: #33191d;
+  color: #ffb0b6;
+  font-size: 10px;
+  font-weight: 800;
+}
+.player-kick-button:hover:not(:disabled) { border-color: #ff8e98; background: #552128; }
 .leave-button {
   width: 100%;
   min-height: 39px;
@@ -248,6 +260,133 @@ a { color: inherit; text-decoration: none; }
 .outsider-choice-2 { background: linear-gradient(135deg, #287d88, #31568f); }
 .outsider-choice-3 { background: linear-gradient(135deg, #b2762f, #a54f38); }
 .outsider-choice-4 { background: linear-gradient(135deg, #527d3e, #28766f); }
+.outsider-dealing { display: grid; justify-items: center; gap: 12px; text-align: center; }
+.outsider-dealing .phase-countdown { justify-self: start; }
+.outsider-deal-deck { display: flex; justify-content: center; min-height: 82px; padding: 8px; }
+.outsider-deal-card {
+  width: 48px;
+  height: 66px;
+  margin-inline: -7px;
+  border: 1px solid #878b95;
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(45deg, transparent 0 7px, #ffffff15 7px 8px),
+    radial-gradient(circle at 50% 40%, #555a65, #17181d 72%);
+  box-shadow: 0 7px 17px #0008;
+  animation: outsider-deal .9s cubic-bezier(.2,.8,.2,1) both;
+  animation-delay: calc(var(--deal-index) * 45ms);
+}
+.outsider-flip-card {
+  width: min(100%, 340px);
+  height: 220px;
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: #fff;
+  perspective: 1000px;
+}
+.outsider-flip-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform .75s cubic-bezier(.2,.8,.2,1);
+}
+.outsider-flip-card.is-revealed .outsider-flip-inner { transform: rotateY(180deg); }
+.outsider-flip-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 14px;
+  padding: 25px;
+  border: 1px solid #727680;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px #0008, inset 0 0 0 1px #ffffff12;
+  backface-visibility: hidden;
+}
+.outsider-flip-back {
+  background:
+    repeating-conic-gradient(from 25deg at 50% 50%, transparent 0 20deg, #ffffff10 20.5deg 21.5deg, transparent 22deg 40deg),
+    radial-gradient(circle at 50% 20%, #44474f, #131417 70%);
+  font-size: 15px;
+  font-weight: 800;
+}
+.outsider-flip-front {
+  transform: rotateY(180deg);
+  border-color: #49bda0;
+  background: radial-gradient(circle at 50% 12%, #287a71, #184d56 58%, #131725);
+}
+.outsider-flip-front.is-spy {
+  border-color: #a16ce2;
+  background: radial-gradient(circle at 50% 12%, #7138a8, #29204f 58%, #141821);
+}
+.outsider-flip-front strong { font-size: 19px; }
+.outsider-flip-front > span { font-size: 27px; font-weight: 800; }
+.outsider-discussion { padding: clamp(24px, 5vw, 48px); text-align: center; }
+.outsider-discussion h3 { font-size: clamp(23px, 4vw, 34px); }
+.outsider-discussion .muted-message { max-width: 580px; margin: 12px auto; }
+.outsider-discussion .primary-button { margin-top: 16px; }
+.outsider-vote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+.outsider-voting-panel .phase-countdown { margin-inline-start: auto; }
+.outsider-vote-player {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #4a4d54;
+  border-radius: 10px;
+  background: linear-gradient(140deg, #202227, #111214);
+}
+.outsider-vote-identity { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.outsider-vote-identity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.outsider-vote-indicators { display: flex; min-width: 28px; min-height: 28px; align-items: center; justify-content: flex-end; }
+.outsider-voter-avatar { width: 25px; height: 25px; margin-inline-start: -6px; border-width: 2px; border-color: #16171a; font-size: 10px; }
+.outsider-vote-target {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 35px;
+  border: 1px solid #777b84;
+  border-radius: 7px;
+  background: #17181c;
+  color: #f5f5f5;
+  font-size: 11px;
+  font-weight: 700;
+}
+.outsider-vote-target:hover:not(:disabled) { border-color: #fff; background: #2b2d32; }
+.outsider-result { position: relative; overflow: hidden; text-align: center; }
+.outsider-result h3 { font-size: clamp(22px, 4vw, 30px); }
+.outsider-confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.outsider-confetti span {
+  position: absolute;
+  top: -12px;
+  left: calc(var(--confetti-index) * 4.166%);
+  width: 7px;
+  height: 13px;
+  border-radius: 2px;
+  background: hsl(calc(var(--confetti-index) * 29), 78%, 64%);
+  animation: outsider-confetti-fall 2.8s ease-in-out infinite;
+  animation-delay: calc(var(--confetti-index) * -110ms);
+}
+@keyframes outsider-deal {
+  from { opacity: 0; transform: translateY(-55px) rotateY(70deg) scale(.6); }
+  to { opacity: 1; transform: translateY(0) rotateY(0) scale(1); }
+}
+@keyframes outsider-confetti-fall {
+  0% { transform: translateY(-15px) rotate(0deg); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(230px) rotate(440deg); opacity: 0; }
+}
 @keyframes outsider-card-arrive { from { opacity: 0; transform: translateY(14px) rotate(-2deg); } to { opacity: 1; transform: translateY(0) rotate(0); } }
 .deal-in { animation: deal-in .7s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes deal-in { from { opacity: 0; transform: rotateY(80deg) translateY(28px) scale(.8); } to { opacity: 1; transform: rotateY(0) translateY(0) scale(1); } }
@@ -458,10 +597,19 @@ a { color: inherit; text-decoration: none; }
   color: #eee;
   font-size: 12px;
 }
-.mafia-log-role strong { color: #c9cace; }
-.mafia-log-role[data-role="mafia"] strong { color: #f18c94; }
-.mafia-log-role[data-role="doctor"] strong { color: #8ed3ae; }
-.mafia-log-role[data-role="detective"] strong { color: #92bced; }
+.mafia-role-chip {
+  flex: 0 0 auto;
+  padding: 4px 9px;
+  border: 1px solid #55575d;
+  border-radius: 6px;
+  background: #292b30;
+  color: #eee;
+  font-size: 10px;
+}
+.mafia-log-role[data-role="mafia"] .mafia-role-chip { border-color: #d54d59; background: #552028; color: #ffb2b8; }
+.mafia-log-role[data-role="doctor"] .mafia-role-chip { border-color: #4aa879; background: #18392a; color: #a7efc5; }
+.mafia-log-role[data-role="detective"] .mafia-role-chip { border-color: #5794d2; background: #1d344c; color: #abd5ff; }
+.mafia-log-role[data-role="town"] .mafia-role-chip { border-color: #666b73; background: #27292e; color: #e0e2e7; }
 .mafia-event { display: block; line-height: 1.8; }
 .mafia-event p { margin: 3px 0; color: #c5c6c9; }
 .mafia-event .mafia-event-title { color: #fff; font-weight: 800; }

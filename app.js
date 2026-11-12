@@ -51,7 +51,7 @@ searchInput.addEventListener("input", () => {
 function authErrorMessage(error) {
   const message = error && error.message ? error.message : "صار خطأ غير متوقع.";
   if (/not found|does not exist|schema cache/i.test(message)) {
-    return "قاعدة بيانات ميلان غير مجهزة. نفّذ ملف supabase-schema.sql من SQL Editor في Supabase.";
+    return "قاعدة بيانات Milan غير مجهزة. نفّذ ملف supabase-schema.sql من SQL Editor في Supabase.";
   }
   if (/jwt|expired|unauthorized/i.test(message)) {
     return "انتهت جلسة الدخول. سجّل خروج ثم ادخل عبر Discord مرة ثانية.";
@@ -67,9 +67,9 @@ function getDisplayName(user, profile) {
     metadata.full_name ||
     metadata.name ||
     metadata.preferred_username;
-  return profile.display_name === "لاعب ميلان" && discordName
+  return profile.display_name === "لاعب Milan" && discordName
     ? discordName
-    : profile.display_name || discordName || "لاعب ميلان";
+    : profile.display_name || discordName || "لاعب Milan";
 }
 
 function isSafeAvatarUrl(value) {
@@ -134,7 +134,7 @@ async function loadLeaderboard() {
   }
   leaderboardList.replaceChildren();
   if (!data.length) {
-    addListText(leaderboardList, "كونوا أول أبطال ميلان!", "leaderboard-placeholder");
+    addListText(leaderboardList, "كونوا أول أبطال Milan!", "leaderboard-placeholder");
     return;
   }
   data.forEach((player, index) => {
@@ -146,7 +146,7 @@ async function loadLeaderboard() {
     rank.textContent = new Intl.NumberFormat("ar").format(index + 1);
     const name = document.createElement("span");
     name.className = "leaderboard-name";
-    name.textContent = player.display_name || "لاعب ميلان";
+    name.textContent = player.display_name || "لاعب Milan";
     const score = document.createElement("strong");
     score.textContent = `${new Intl.NumberFormat("ar").format(player.xp || 0)} XP`;
     identity.append(rank, createAvatar(player.avatar_url, name.textContent), name);

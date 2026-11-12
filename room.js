@@ -66,8 +66,11 @@ let lastStatus = null;
 let roleRevealed = false;
 let lastAnimationKey = "";
 let lastSnapshotKey = "";
+let outsiderCardRevealed = false;
 let lastMafiaTimeoutKey = "";
 let lastMafiaTimeoutAttemptAt = 0;
+let lastOutsiderTimeoutKey = "";
+let lastOutsiderTimeoutAttemptAt = 0;
 let roomActive = document.body.hasAttribute("data-room-standalone");
 let finishedRoomKey = "";
 
@@ -152,15 +155,24 @@ function updateMafiaCountdown() {
     timer.classList.toggle("is-urgent", remaining <= 15);
   });
   const state = currentRoom?.public;
-  if (!roomActive || currentRoom?.game !== "mafia" || currentRoom.status !== "playing" ||
-      !["night", "morning"].includes(state?.phase)) return;
+  if (!roomActive || currentRoom?.status !== "playing") return;
+  const mafiaPhase = currentRoom.game === "mafia" && ["reveal", "night", "morning"].includes(state?.phase);
+  const outsiderPhase = currentRoom.game === "outsider" && ["dealing", "vote"].includes(state?.phase);
+  if (!mafiaPhase && !outsiderPhase) return;
   const deadline = Date.parse(state.phaseEndsAt || "");
   if (Number.isFinite(deadline) && deadline > now) return;
   const timeoutKey = `${currentRoom.code}:${state.phase}:${state.round}:${state.phaseEndsAt}`;
-  if (timeoutKey === lastMafiaTimeoutKey && now - lastMafiaTimeoutAttemptAt < 5000) return;
-  lastMafiaTimeoutKey = timeoutKey;
-  lastMafiaTimeoutAttemptAt = now;
-  void runCommand("mafia_timeout");
+  if (mafiaPhase) {
+    if (timeoutKey === lastMafiaTimeoutKey && now - lastMafiaTimeoutAttemptAt < 5000) return;
+    lastMafiaTimeoutKey = timeoutKey;
+    lastMafiaTimeoutAttemptAt = now;
+    void runCommand("mafia_timeout");
+  } else {
+    if (timeoutKey === lastOutsiderTimeoutKey && now - lastOutsiderTimeoutAttemptAt < 5000) return;
+    lastOutsiderTimeoutKey = timeoutKey;
+    lastOutsiderTimeoutAttemptAt = now;
+    void runCommand("outsider_timeout");
+  }
 }
 
 function resetRoleReveal() {
@@ -221,6 +233,7 @@ function addPlayerTag(container, text, className = "") {
 
 function renderPlayers(room) {
   const eliminated = room.public.eliminated || [];
+  const kicked = room.public.kicked || [];
   const qualified = room.public.qualified || [];
   const roles = room.public.roles || {};
   const countText = `${new Intl.NumberFormat("ar").format(room.players.length)} / ${new Intl.NumberFormat("ar").format(room.maxPlayers)}`;
@@ -236,7 +249,9 @@ function renderPlayers(room) {
     item.dataset.playerId = player.id;
     if (player.id === currentUser.id) item.classList.add("is-me");
     const isOut = eliminated.includes(player.id);
-    if (isOut) item.classList.add("is-out");
+    const isKicked = kicked.includes(player.id);
+    if (isOut || isKicked) item.classList.add("is-out");
+    if (isKicked) item.classList.add("is-kicked");
 
     const info = document.createElement("div");
     info.className = "player-info";
@@ -246,7 +261,8 @@ function renderPlayers(room) {
     const badges = document.createElement("div");
     badges.className = "player-badges";
     if (player.isHost) addPlayerTag(badges, "المضيف");
-    if (isOut) addPlayerTag(badges, room.game === "guess" ? "متفرج" : "مقصى", "out");
+    if (isKicked) addPlayerTag(badges, "خارج المباراة", "out");
+    else if (isOut) addPlayerTag(badges, room.game === "guess" ? "متفرج" : "مقصى", "out");
     else if (room.game === "guess" && qualified.includes(player.id)) addPlayerTag(badges, "متأهل", "safe");
     if (room.status === "finished" && roles[player.id]) addPlayerTag(badges, roleInfo[roles[player.id]]?.title || roles[player.id]);
     info.append(name, badges);
@@ -266,7 +282,7 @@ function renderLobby(room) {
   const heading = document.createElement("h2");
   heading.textContent = "الغرفة جاهزة";
   section.append(heading);
-  appendMessage(section, "أرسلوا رمز الغرفة لأصحابكم. يقدرون ينضمون من صفحة ميلان، وبعد اكتمال الفريق يبدأ المضيف.");
+  appendMessage(section, "أرسلوا رمز الغرفة لأصحابكم. يقدرون ينضمون من صفحة Milan، وبعد اكتمال الفريق يبدأ المضيف.");
   gameContent.append(section);
 
   let mafiaRoleSettings = null;
@@ -389,7 +405,8 @@ function renderLobby(room) {
 
 function renderMafia(room, state, me) {
   const eliminated = state.eliminated || [];
-  const isOut = eliminated.includes(currentUser.id);
+  const kicked = state.kicked || [];
+  const isOut = eliminated.includes(currentUser.id) || kicked.includes(currentUser.id);
   if (state.phase !== "reveal") roleRevealed = false;
   if (room.status === "finished") {
     renderMafiaResult(room, state);
@@ -412,7 +429,7 @@ function renderMafia(room, state, me) {
     back.disabled = flipped || commandBusy;
     back.setAttribute("aria-label", "اقلب بطاقة دورك");
     appendMessage(back, "✦", "mafia-card-mark");
-    appendMessage(back, "ميلان", "mafia-card-brand");
+    appendMessage(back, "Milan", "mafia-card-brand");
     appendMessage(back, "اضغط لقراءة دورك", "mafia-card-hint");
     const front = document.createElement("div");
     front.className = `mafia-card-face mafia-card-front ${me.role}-role`;
@@ -440,8 +457,10 @@ function renderMafia(room, state, me) {
 
     const readiness = createPanel(
       me.ready ? "أنت جاهز" : "اقرأ بطاقتك ثم اضغط جاهز",
-      `${new Intl.NumberFormat("ar").format(state.readyCount || 0)} / ${new Intl.NumberFormat("ar").format(room.players.length)} جاهزين.`,
+      `${new Intl.NumberFormat("ar").format(state.readyCount || 0)} / ${new Intl.NumberFormat("ar").format(room.players.filter((player) => !kicked.includes(player.id)).length)} جاهزين.`,
     );
+    appendMafiaTimer(readiness, state.phaseEndsAt);
+    if (!me.ready) appendMessage(readiness, "يبدأ الليل عند جاهزية الجميع أو بعد انتهاء العدّاد المتزامن.");
     if (flipped && !me.ready) {
       readiness.append(createButton("جاهز", "ready", {}, "primary-button mafia-ready-button"));
     } else if (!flipped) {
@@ -465,8 +484,9 @@ function renderMafia(room, state, me) {
   }
 
   if (state.phase === "night") {
-    const phase = createPanel("حلّ الليل", "لديكم دقيقة واحدة لإجراءات الليل. لا تظهر اختياراتك السرية للاعبين الآخرين.");
+    const phase = createPanel("حلّ الليل", "لديكم ٢٠ ثانية للقتل أو الحماية أو التحقيق. اختياراتك سرية.");
     appendMafiaTimer(phase, state.phaseEndsAt);
+    if (state.voteResult === "tie") appendMessage(phase, "تعادل التصويت؛ لم يُقصَ أحد وانتقلتم إلى الليل.");
     if (me.lastInvestigation?.round === state.round) {
       const investigatedRole = roleInfo[me.lastInvestigation.role]?.title || "دور غير معروف";
       appendMessage(
@@ -478,7 +498,7 @@ function renderMafia(room, state, me) {
     if (Number(me.actedRound) === Number(state.round)) {
       appendMessage(phase, "تم تسجيل إجراءك لهذه الليلة. انتظروا خبر الصباح.");
     } else {
-      const activePlayers = room.players.filter((player) => !eliminated.includes(player.id));
+      const activePlayers = room.players.filter((player) => !eliminated.includes(player.id) && !kicked.includes(player.id));
       let targets = activePlayers;
       if (me.role === "mafia") {
         const teammates = me.teammates || [];
@@ -535,7 +555,7 @@ function renderMafiaMorning(room, state) {
       identity.append(avatar, name);
       panel.append(identity);
     }
-    appendMessage(panel, "لم يعد بيننا هذا الصباح بعد ليلة قاسية.", "mafia-morning-copy");
+    appendMessage(panel, `تم قتل ${player?.name || "أحد اللاعبين"} في الليلة الماضية.`, "mafia-morning-copy");
   } else if (result.type === "saved") {
     appendMessage(panel, "كانت ليلة خطرة، لكن الجميع أصبحوا بخير هذا الصباح.", "mafia-morning-copy");
   } else {
@@ -559,6 +579,7 @@ function renderMafiaSpectatorLog(room, state) {
     const name = document.createElement("span");
     name.textContent = player.name;
     const roleName = document.createElement("strong");
+    roleName.className = "mafia-role-chip";
     roleName.textContent = roleInfo[role]?.title || role;
     item.append(name, roleName);
     roleList.append(item);
@@ -572,15 +593,12 @@ function renderMafiaSpectatorLog(room, state) {
   } else {
     const entries = document.createElement("ol");
     entries.className = "mafia-event-list";
-    log.forEach((entry) => {
+    log.slice(-3).forEach((entry) => {
       const item = document.createElement("li");
       item.className = "mafia-event";
       if (entry.type === "day_vote") {
-        const votes = Object.entries(entry.votes || {}).map(([voter, target]) =>
-          `${getPlayerName(room, voter)} ${target === "skip" ? "صوّت للتخطي" : `صوّت لـ ${getPlayerName(room, target)}`}`);
         const round = new Intl.NumberFormat("ar").format(entry.round || 1);
         appendMessage(item, `تصويت الصباح · الجولة ${round}`, "mafia-event-title");
-        appendMessage(item, votes.length ? votes.join("، ") : "لم يسجل أحد صوتًا.");
         appendMessage(item, entry.outcome === "skipped"
           ? "صوّت الجميع للتخطي."
           : entry.outcome === "tie"
@@ -595,19 +613,6 @@ function renderMafiaSpectatorLog(room, state) {
       } else {
         const round = new Intl.NumberFormat("ar").format(entry.round || 1);
         appendMessage(item, `أحداث الليل · الجولة ${round}`, "mafia-event-title");
-        const mafiaActions = Object.entries(entry.mafiaVotes || {}).map(([actor, target]) =>
-          `${getPlayerName(room, actor)} اختار ${getPlayerName(room, target)}`);
-        appendMessage(item, mafiaActions.length
-          ? `اختيارات المافيا: ${mafiaActions.join("، ")}.`
-          : "لم تسجل المافيا اختيارًا.");
-        const doctorActions = Object.entries(entry.doctorVotes || {}).map(([actor, target]) =>
-          `${getPlayerName(room, actor)} حمى ${getPlayerName(room, target)}`);
-        if (doctorActions.length) appendMessage(item, `اختيارات الأطباء: ${doctorActions.join("، ")}.`);
-        const detectiveActions = Object.entries(entry.detectiveVotes || {}).map(([actor, target]) => {
-          const result = entry.detectiveResults?.[actor]?.role;
-          return `${getPlayerName(room, actor)} تحرّى عن ${getPlayerName(room, target)}${result ? ` وكانت بطاقته ${roleInfo[result]?.title || result}` : ""}`;
-        });
-        if (detectiveActions.length) appendMessage(item, `تحرّيات المحققين: ${detectiveActions.join("، ")}.`);
         appendMessage(item, entry.outcome === "saved"
           ? `حُمي ${getPlayerName(room, entry.mafiaTarget)} ولم يُقصَ.`
           : entry.outcome === "tie"
@@ -637,6 +642,7 @@ function renderVote(room, state, mafiaGame = false) {
   );
   const votes = state.votes || {};
   const eliminated = state.eliminated || [];
+  const kicked = state.kicked || [];
   const hasVoted = Object.prototype.hasOwnProperty.call(votes, currentUser.id);
   if (hasVoted) {
     appendMessage(
@@ -648,8 +654,9 @@ function renderVote(room, state, mafiaGame = false) {
   } else {
     const candidates = room.players.filter((player) =>
       player.id !== currentUser.id &&
+      !kicked.includes(player.id) &&
       (!mafiaGame || !eliminated.includes(player.id)) &&
-      (!mafiaGame || !eliminated.includes(currentUser.id)),
+      (!mafiaGame || (!eliminated.includes(currentUser.id) && !kicked.includes(currentUser.id))),
     );
     const actions = document.createElement("div");
     actions.className = "game-actions";
@@ -664,7 +671,7 @@ function renderVote(room, state, mafiaGame = false) {
     phase.append(actions);
   }
   const voteCount = Object.keys(votes).length;
-  const activeCount = room.players.filter((player) => !eliminated.includes(player.id)).length;
+  const activeCount = room.players.filter((player) => !eliminated.includes(player.id) && !kicked.includes(player.id)).length;
   appendMessage(
     phase,
     `الأصوات المسجّلة: ${new Intl.NumberFormat("ar").format(voteCount)} / ${new Intl.NumberFormat("ar").format(mafiaGame ? activeCount : room.players.length)}.`,
@@ -672,19 +679,134 @@ function renderVote(room, state, mafiaGame = false) {
   gameContent.append(phase);
 }
 
-function renderOutsider(room, state, me) {
-  const roleCard = createPanel(me.spy ? "أنت خارج السالفة" : "كلمتك السرية", me.spy
-    ? "حاول تكتشف الكلمة من النقاش من دون ما ينكشف أمرك."
-    : `الكلمة هي: ${me.word || "—"}`, `role-card outsider-secret-card${me.spy ? " outsider-spy-card" : " outsider-crew-card"}`);
-  if (state.phase !== "result") gameContent.append(roleCard);
+function renderOutsiderVote(room, state) {
+  const panel = createPanel("التصويت مفتوح", "اختاروا اللاعب الذي تظنون أنه برا السالفة.");
+  panel.classList.add("outsider-voting-panel");
+  appendMafiaTimer(panel, state.phaseEndsAt);
+  const votes = state.votes || {};
+  const kicked = state.kicked || [];
+  const hasVoted = Object.prototype.hasOwnProperty.call(votes, currentUser.id);
+  const grid = document.createElement("div");
+  grid.className = "outsider-vote-grid";
 
-  if (state.phase === "discussion") {
-    const phase = createPanel("وقت النقاش", "اسألوا بعض أسئلة تلميحية من دون قول الكلمة نفسها.");
+  room.players.filter((player) => !kicked.includes(player.id)).forEach((player) => {
+    const card = document.createElement("article");
+    card.className = "outsider-vote-player";
+    const identity = document.createElement("div");
+    identity.className = "outsider-vote-identity";
+    identity.append(createAvatar(player));
+    const name = document.createElement("strong");
+    name.textContent = player.name;
+    identity.append(name);
+    card.append(identity);
+
+    const voters = Object.entries(votes)
+      .filter(([, target]) => target === player.id)
+      .map(([voter]) => room.players.find((entry) => entry.id === voter))
+      .filter(Boolean);
+    const indicators = document.createElement("div");
+    indicators.className = "outsider-vote-indicators";
+    indicators.setAttribute("aria-label", voters.length
+      ? `صوّت على هذا اللاعب: ${voters.map((voter) => voter.name).join("، ")}`
+      : "لم يصوّت عليه أحد بعد");
+    voters.forEach((voter) => {
+      const avatar = createAvatar(voter);
+      avatar.classList.add("outsider-voter-avatar");
+      avatar.title = voter.name;
+      avatar.setAttribute("aria-hidden", "true");
+      indicators.append(avatar);
+    });
+    card.append(indicators);
+
+    if (!hasVoted && player.id !== currentUser.id) {
+      const button = createButton("صوّت لهذا اللاعب", "vote", { target: player.id }, "outsider-vote-target");
+      button.setAttribute("aria-label", `صوّت لإخراج ${player.name}`);
+      card.append(button);
+    }
+    grid.append(card);
+  });
+  panel.append(grid);
+  appendMessage(panel, `الأصوات المسجّلة: ${new Intl.NumberFormat("ar").format(Object.keys(votes).length)} / ${new Intl.NumberFormat("ar").format(room.players.filter((player) => !kicked.includes(player.id)).length)}.`);
+  if (hasVoted) {
+    const target = room.players.find((player) => player.id === votes[currentUser.id]);
+    appendMessage(panel, target ? `صوّت على ${target.name}.` : "تم تسجيل صوتك؛ ننتظر بقية اللاعبين.");
+  }
+
+  gameContent.append(panel);
+}
+
+function renderKickControl(room) {
+  if (room.hostId !== currentUser.id) return;
+  const kicked = room.public.kicked || [];
+  const candidates = room.players.filter((player) => player.id !== room.hostId && !kicked.includes(player.id));
+  if (!candidates.length) return;
+  const panel = createPanel("إدارة المباراة", "إخراج لاعب يخرجه من هذه المباراة فقط؛ سيبقى في الغرفة.");
+  const form = document.createElement("form");
+  form.className = "text-form";
+  form.dataset.roomForm = "kick_player";
+  const select = document.createElement("select");
+  select.name = "playerId";
+  select.setAttribute("aria-label", "اللاعب المراد إخراجه من المباراة");
+  candidates.forEach((player) => {
+    const option = document.createElement("option");
+    option.value = player.id;
+    option.textContent = player.name;
+    select.append(option);
+  });
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.className = "danger-button player-kick-button";
+  submit.textContent = "إخراج من المباراة";
+  submit.disabled = commandBusy;
+  form.append(select, submit);
+  panel.append(form);
+  gameContent.append(panel);
+}
+
+function renderOutsider(room, state, me) {
+  if (state.phase === "dealing") {
+    const phase = document.createElement("section");
+    phase.className = "outsider-dealing";
+    appendMessage(phase, "توزيع البطاقات", "eyebrow");
+    appendMafiaTimer(phase, state.phaseEndsAt);
+    const deck = document.createElement("div");
+    deck.className = "outsider-deal-deck";
+    deck.setAttribute("aria-hidden", "true");
+    room.players.forEach((_player, index) => {
+      const card = document.createElement("span");
+      card.className = "outsider-deal-card";
+      card.style.setProperty("--deal-index", String(index));
+      deck.append(card);
+    });
+    phase.append(deck);
+    const card = createButton("", "flip_outsider_card", {}, `outsider-flip-card${outsiderCardRevealed ? " is-revealed" : ""}`);
+    card.setAttribute("aria-label", outsiderCardRevealed
+      ? (me.spy ? "أنت برا السالفة" : `كلمتك السرية: ${me.word || ""}`)
+      : "اقلب بطاقتك السرية");
+    const inner = document.createElement("span");
+    inner.className = "outsider-flip-inner";
+    const back = document.createElement("span");
+    back.className = "outsider-flip-face outsider-flip-back";
+    back.textContent = "اضغط لقلب البطاقة";
+    const front = document.createElement("span");
+    front.className = `outsider-flip-face outsider-flip-front${me.spy ? " is-spy" : ""}`;
+    const title = document.createElement("strong");
+    title.textContent = me.spy ? "أنت برا السالفة" : "كلمتك السرية";
+    const word = document.createElement("span");
+    word.textContent = me.spy ? "حاول اكتشاف الكلمة" : (me.word || "—");
+    front.append(title, word);
+    inner.append(back, front);
+    card.append(inner);
+    phase.append(card);
+    appendMessage(phase, "اقلب بطاقتك واقرأها جيدًا. ستختفي تلقائيًا بعد ١٠ ثوانٍ.", "muted-message");
+    gameContent.append(phase);
+  } else if (state.phase === "discussion") {
+    const phase = createPanel("مناقشة لمعرفة من برا السالفة", "ناقشوا الكلمة بالتلميح من دون ذكرها صراحةً.", "phase-card outsider-discussion");
     if (room.hostId === currentUser.id) phase.append(createButton("ابدأ التصويت", "begin_vote", {}, "primary-button"));
     else appendMessage(phase, "بانتظار المضيف لفتح التصويت.");
     gameContent.append(phase);
   } else if (state.phase === "vote") {
-    renderVote(room, state);
+    renderOutsiderVote(room, state);
   } else if (state.phase === "spy_guess") {
     const phase = createPanel("فرصة أخيرة", state.guessingSpy === currentUser.id
       ? "تم التصويت عليك! اختر الكلمة الصحيحة من بين أربع بطاقات. إذا عرفتها تفوز."
@@ -700,9 +822,6 @@ function renderOutsider(room, state, me) {
       else appendMessage(phase, "تعذّر تحميل خيارات الكلمة. حدّث الصفحة وحاول مرة أخرى.", "error-message");
     }
     gameContent.append(phase);
-  } else if (state.phase === "result") {
-    const panel = createPanel("النتيجة", `الفائز: ${winnerNames[state.winner] || state.winner}.`);
-    gameContent.append(panel);
   }
 }
 
@@ -903,9 +1022,46 @@ function renderGuessResult(room, state) {
 
 function renderResult(room) {
   const state = room.public;
-  if (room.game === "mafia") renderMafiaResult(room, state);
-  else if (room.game === "guess") renderGuessResult(room, state);
-  else {
+  if (room.game === "mafia") {
+    renderMafiaResult(room, state);
+    if (room.hostId === currentUser.id) {
+      gameContent.append(createButton("إعادة اللعب", "mafia_replay", {}, "primary-button"));
+    } else {
+      appendMessage(gameContent, "بانتظار المضيف لإعادة اللعب.");
+    }
+    return;
+  } else if (room.game === "guess") renderGuessResult(room, state);
+  else if (room.game === "outsider") {
+    const spyWon = state.winner === "spy";
+    const panel = createPanel(
+      spyWon ? "فاز اللاعبون خارج السالفة" : "فاز أهل السالفة",
+      spyWon
+        ? "لم يتمكن الفريق من كشف برا السالفة، أو نجح في تخمين الكلمة."
+        : "تم كشف برا السالفة ولم يختر الكلمة السرية.",
+      `phase-card outsider-result${spyWon && room.me.spy ? " outsider-spy-victory" : ""}`,
+    );
+    if (state.guessingSpy) {
+      appendMessage(panel, `اللاعب الذي كُشف: ${getPlayerName(room, state.guessingSpy)}.`);
+    }
+    if (spyWon && room.me.spy) {
+      const confetti = document.createElement("div");
+      confetti.className = "outsider-confetti";
+      confetti.setAttribute("aria-hidden", "true");
+      for (let index = 0; index < 24; index += 1) {
+        const piece = document.createElement("span");
+        piece.style.setProperty("--confetti-index", String(index));
+        confetti.append(piece);
+      }
+      panel.append(confetti);
+    }
+    gameContent.append(panel);
+    if (room.hostId === currentUser.id) {
+      gameContent.append(createButton("بدء جولة جديدة", "new_outsider_round", {}, "primary-button"));
+    } else {
+      appendMessage(gameContent, "بانتظار مضيف الغرفة لبدء جولة جديدة.");
+    }
+    return;
+  } else {
     const winner = winnerNames[state.winner] || state.winner || "انتهت الجولة";
     gameContent.append(createPanel("انتهت الجولة", `الفائز: ${winner}. تم توزيع نقاط XP.`));
   }
@@ -927,10 +1083,13 @@ function renderRoom(room) {
   const nextMode = room.status === "lobby" ? "lobby" : "match";
   const previousMode = lastStatus === null ? null : lastStatus === "lobby" ? "lobby" : "match";
   const previousPhase = currentRoom?.public?.phase;
+  const previousOutsiderRound = currentRoom?.public?.outsiderRound;
   const screenChanged = previousMode !== null && previousMode !== nextMode;
   const phaseChanged = nextMode === "match" && previousMode === "match" && previousPhase !== room.public.phase;
   const savedFormState = screenChanged ? null : captureFormState();
   const previousStatus = lastStatus;
+  if (room.game === "outsider" && room.public.phase === "dealing" &&
+      previousOutsiderRound !== room.public.outsiderRound) outsiderCardRevealed = false;
   currentRoom = room;
   gameContent = nextMode === "lobby" ? lobbyContent : matchContent;
   lobbyScreen.hidden = nextMode !== "lobby";
@@ -948,14 +1107,18 @@ function renderRoom(room) {
     const roundLabel = room.game === "guess" && room.public.roundLimit
       ? `الجولة ${new Intl.NumberFormat("ar").format(round)} من ${new Intl.NumberFormat("ar").format(room.public.roundLimit)}`
       : `الجولة ${new Intl.NumberFormat("ar").format(round)}`;
-    matchGameLabel.textContent = gameNames[room.game] || "ميلان";
-    matchRoundLabel.textContent = `المباراة ${new Intl.NumberFormat("ar").format(matchNumber)} من ${new Intl.NumberFormat("ar").format(matchLimit)} · ${roundLabel}`;
+    matchGameLabel.textContent = gameNames[room.game] || "Milan";
+    matchRoundLabel.textContent = room.game === "outsider"
+      ? `الجولة ${new Intl.NumberFormat("ar").format(room.public.outsiderRound || matchNumber)}`
+      : `المباراة ${new Intl.NumberFormat("ar").format(matchNumber)} من ${new Intl.NumberFormat("ar").format(matchLimit)} · ${roundLabel}`;
     matchPhaseLabel.textContent = phaseLabel(room.public.phase) || "النتيجة";
   }
-  roomTitle.textContent = gameNames[room.game] || "غرفة ميلان";
-  const matchLabel = room.public.matchNumber && room.public.matchLimit
-    ? ` · المباراة ${new Intl.NumberFormat("ar").format(room.public.matchNumber)}/${new Intl.NumberFormat("ar").format(room.public.matchLimit)}`
-    : "";
+  roomTitle.textContent = gameNames[room.game] || "غرفة Milan";
+  const matchLabel = room.game === "outsider" && room.public.outsiderRound
+    ? ` · الجولة ${new Intl.NumberFormat("ar").format(room.public.outsiderRound)}`
+    : room.public.matchNumber && room.public.matchLimit
+      ? ` · المباراة ${new Intl.NumberFormat("ar").format(room.public.matchNumber)}/${new Intl.NumberFormat("ar").format(room.public.matchLimit)}`
+      : "";
   gameLabel.textContent = `${room.status === "lobby" ? "بانتظار اللاعبين" : room.status === "finished" ? "انتهت الجولة" : "اللعب مستمر"}${matchLabel}`;
   roomCodeDisplay.textContent = room.code;
   renderPlayers(room);
@@ -963,10 +1126,17 @@ function renderRoom(room) {
 
   if (room.status === "lobby") renderLobby(room);
   else if (room.status === "finished" || room.public.phase === "result") renderResult(room);
+  else if ((room.public.kicked || []).includes(currentUser.id)) {
+    if (room.game === "mafia" && room.public.phase === "morning") renderMafiaMorning(room, room.public);
+    else appendMessage(gameContent, "تم إخراجك من المباراة، لكنك ما زلت في الغرفة ويمكنك متابعة النتيجة.", "muted-message");
+  }
   else if (room.game === "mafia") renderMafia(room, room.public, room.me);
   else if (room.game === "outsider") renderOutsider(room, room.public, room.me);
   else if (room.game === "codenames") renderCodenames(room, room.public, room.me);
   else renderGuess(room, room.public);
+  if (room.status === "playing" && !(room.public.kicked || []).includes(currentUser.id)) {
+    renderKickControl(room);
+  }
   restoreFormState(savedFormState);
   if (screenChanged || phaseChanged) {
     gameContent.classList.remove("screen-enter");
@@ -985,8 +1155,10 @@ function renderRoom(room) {
     lastAnimationKey = animationKey;
   }
   if (room.status === "finished" && previousStatus !== "finished") {
-    showResultOverlay(room);
-    const finishKey = `${room.code}:${room.public.matchNumber || 1}`;
+    if (!["outsider", "mafia"].includes(room.game)) showResultOverlay(room);
+    const finishKey = `${room.code}:${room.game === "outsider"
+      ? room.public.outsiderRound || room.public.matchNumber || 1
+      : room.public.matchNumber || 1}`;
     if (finishKey !== finishedRoomKey) {
       finishedRoomKey = finishKey;
       window.dispatchEvent(new CustomEvent("milan:room-finished"));
@@ -1007,6 +1179,7 @@ function phaseLabel(phase) {
     night: "الليل",
     morning: "خبر الصباح",
     reveal: "التعرّف على الأدوار",
+    dealing: "توزيع البطاقات",
     discussion: "النقاش",
     vote: "التصويت",
     spy_guess: "تخمين الكلمة",
@@ -1051,7 +1224,7 @@ function renderError(text) {
   roomView?.setAttribute("data-screen", "lobby");
   document.body.setAttribute("data-room-screen", "lobby");
   roomTitle.textContent = "تعذّر فتح الغرفة";
-  gameLabel.textContent = "غرفة ميلان";
+  gameLabel.textContent = "غرفة Milan";
   leaveButtons.forEach((button) => {
     button.hidden = true;
   });
@@ -1090,7 +1263,7 @@ async function fetchSnapshot() {
 async function runCommand(action, payload = {}) {
   if (!roomActive || !supabaseClient || !currentUser || commandBusy) return;
   commandBusy = true;
-  if (action !== "mafia_timeout") setMessage("جاري تسجيل الإجراء...", "");
+  if (!["mafia_timeout", "outsider_timeout"].includes(action)) setMessage("جاري تسجيل الإجراء...", "");
   let data;
   let error;
   try {
@@ -1101,11 +1274,12 @@ async function runCommand(action, payload = {}) {
         currentUser.user_metadata?.custom_claims?.global_name ||
         currentUser.user_metadata?.full_name ||
         currentUser.user_metadata?.name ||
-        "لاعب ميلان",
+        "لاعب Milan",
       p_payload: payload,
     }));
   } catch (requestError) {
     if (action === "mafia_timeout") lastMafiaTimeoutAttemptAt = 0;
+    if (action === "outsider_timeout") lastOutsiderTimeoutAttemptAt = 0;
     setMessage(requestError.message || "تعذّر الاتصال بالخادم.", "error");
     return;
   } finally {
@@ -1113,6 +1287,7 @@ async function runCommand(action, payload = {}) {
   }
   if (error) {
     if (action === "mafia_timeout") lastMafiaTimeoutAttemptAt = 0;
+    if (action === "outsider_timeout") lastOutsiderTimeoutAttemptAt = 0;
     setMessage(error.message || "تعذّر تنفيذ الإجراء.", "error");
     return;
   }
@@ -1121,9 +1296,10 @@ async function runCommand(action, payload = {}) {
     return;
   }
   if (data?.code) {
-    if (action === "next_round") resultOverlay.hidden = true;
-    if (action === "start" || action === "next_round") {
+    if (action === "next_round" || action === "new_outsider_round" || action === "mafia_replay") resultOverlay.hidden = true;
+    if (action === "start" || action === "next_round" || action === "new_outsider_round" || action === "mafia_replay") {
       resetRoleReveal();
+      outsiderCardRevealed = false;
     }
     renderRoom(data);
   }
@@ -1142,6 +1318,7 @@ function stopPolling() {
 function closeRoom() {
   stopPolling();
   resetRoleReveal();
+  outsiderCardRevealed = false;
   roomActive = false;
   if (document.body.hasAttribute("data-room-standalone")) {
     window.location.assign("index.html#games");
@@ -1151,7 +1328,7 @@ function closeRoom() {
   if (roomStylesheet) roomStylesheet.media = "not all";
   document.body.classList.remove("room-active");
   document.body.removeAttribute("data-room-screen");
-  document.title = "ميلان | اللعب يحلى بجمعتكم";
+  document.title = "Milan | اللعب يحلى بجمعتكم";
   roomCode = "";
   currentRoom = null;
   lastStatus = null;
@@ -1171,6 +1348,7 @@ async function openRoom(code) {
   lastSnapshotKey = "";
   finishedRoomKey = "";
   resetRoleReveal();
+  outsiderCardRevealed = false;
   gameContent = lobbyContent;
   lobbyScreen.hidden = false;
   matchScreen.hidden = true;
@@ -1182,7 +1360,7 @@ async function openRoom(code) {
     roomStylesheet.media = "all";
     document.body.classList.add("room-active");
     roomView.hidden = false;
-    document.title = "غرفة اللعب | ميلان";
+    document.title = "غرفة اللعب | Milan";
   }
   resultOverlay.hidden = true;
   roomCodeDisplay.textContent = roomCode || "------";
@@ -1208,7 +1386,7 @@ async function openRoom(code) {
     loginButton.hidden = false;
     setMessage("سجّل الدخول عبر Discord لفتح الغرفة.", "error");
     gameContent.replaceChildren();
-    gameContent.append(createPanel("مرحبًا بك في ميلان", "سجّل الدخول بالحساب الذي انضم إلى هذه الغرفة."));
+    gameContent.append(createPanel("مرحبًا بك في Milan", "سجّل الدخول بالحساب الذي انضم إلى هذه الغرفة."));
     return;
   }
   loginButton.hidden = true;
@@ -1274,6 +1452,14 @@ roomRoot.addEventListener("click", (event) => {
     }
     return;
   }
+  if (action === "flip_outsider_card") {
+    outsiderCardRevealed = !outsiderCardRevealed;
+    button.classList.toggle("is-revealed", outsiderCardRevealed);
+    button.setAttribute("aria-label", outsiderCardRevealed
+      ? (currentRoom?.me.spy ? "أنت برا السالفة" : `كلمتك السرية: ${currentRoom?.me.word || ""}`)
+      : "اقلب بطاقتك السرية");
+    return;
+  }
   if (action === "start" && currentRoom?.game === "outsider") {
     payload.spyCount = Number(document.querySelector("#spy-count")?.value || 1);
   }
@@ -1298,6 +1484,7 @@ roomRoot.addEventListener("submit", (event) => {
   const values = new FormData(form);
   const payload = Object.fromEntries(values.entries());
   if (payload.count) payload.count = Number(payload.count);
+  if (form.dataset.roomForm === "kick_player" && !window.confirm("هل تريد إخراج هذا اللاعب من المباراة فقط؟")) return;
   void runCommand(form.dataset.roomForm, payload);
 });
 
