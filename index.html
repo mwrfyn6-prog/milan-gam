@@ -32,6 +32,10 @@
       <div class="header-actions">
         <button class="discord-button" id="discord-login" type="button">دخول Discord</button>
         <div class="profile-bar" id="profile-bar" hidden>
+          <span class="avatar-shell profile-avatar">
+            <img id="profile-avatar" alt="" referrerpolicy="no-referrer" />
+            <span id="profile-avatar-fallback" aria-hidden="true">م</span>
+          </span>
           <span id="profile-name"></span>
           <strong><span id="profile-xp">0</span> XP</strong>
           <button id="discord-logout" type="button" aria-label="تسجيل الخروج">خروج</button>
@@ -81,7 +85,7 @@
         </div>
 
         <div class="game-grid" id="game-grid">
-          <article class="game-card mafia-card" data-name="مافيا" data-description="عيشوا أجواء الغموض، اكتشفوا المافيا قبل ما تسيطر على المدينة." data-min-players="6" data-max-players="12">
+          <article class="game-card mafia-card" data-name="مافيا" data-description="مافيا بطبيب ومحقق ومواطنين: أدوار سرية، ليل ونهار، وتصويت حتى يفوز فريق." data-min-players="5" data-max-players="12">
             <div class="card-visual visual-mafia">
               <span class="game-icon" aria-hidden="true">♟</span>
               <span class="visual-label">خداع &nbsp;·&nbsp; نقاش</span>
@@ -89,14 +93,14 @@
               <span class="visual-orbit orbit-two"></span>
             </div>
             <div class="game-info">
-              <div class="game-meta"><span>للجمعة الكبيرة</span><span>٦–١٢ لاعبين</span></div>
+              <div class="game-meta"><span>للجمعة الكبيرة</span><span>٥–١٢ لاعبين</span></div>
               <h3>مافيا</h3>
-              <p>مين البريء ومين يخفي سرّه؟ اختبروا ذكاءكم واقنعوا الباقين.</p>
+              <p>أدوار سرية، ليل ونهار، وطبيب ومحقق — اكشفوا المافيا قبل ما تسيطر على المدينة.</p>
               <button class="game-button" type="button" data-game="مافيا" data-game-id="mafia">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
             </div>
           </article>
 
-          <article class="game-card outsider-card" data-name="مين برا السالفة" data-description="واحد منكم ما يعرف الموضوع — تقدرون تكشفونه بدون ما تفضحون الكلمة؟" data-min-players="3" data-max-players="10">
+          <article class="game-card outsider-card" data-name="مين برا السالفة" data-description="واحد أو أكثر ما يعرفون الموضوع — تقدرون تكشفونهم بدون ما تفضحون الكلمة؟" data-min-players="3" data-max-players="12">
             <div class="card-visual visual-outsider">
               <span class="game-icon" aria-hidden="true">◉</span>
               <span class="visual-label">سرّ &nbsp;·&nbsp; تخمين</span>
@@ -104,14 +108,14 @@
               <span class="speech-bubble bubble-two">أكيد...</span>
             </div>
             <div class="game-info">
-              <div class="game-meta"><span>لعبتها سوالف</span><span>٣–١٠ لاعبين</span></div>
+              <div class="game-meta"><span>لعبتها سوالف</span><span>٣–١٢ لاعبين</span></div>
               <h3>مين برا السالفة؟</h3>
-              <p>واحد منكم ما يعرف الموضوع — تقدرون تكشفونه بدون ما تفضحون الكلمة؟</p>
+              <p>واحد أو أكثر ما يعرفون الموضوع — تقدرون تكشفونهم بدون ما تفضحون الكلمة؟</p>
               <button class="game-button" type="button" data-game="مين برا السالفة؟" data-game-id="outsider">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
             </div>
           </article>
 
-          <article class="game-card codenames-card" data-name="كود نيمز" data-description="قسّموا فريقين، اربطوا الكلمات ببعض وخلو التلميحات تقودكم للفوز." data-min-players="4" data-max-players="8">
+          <article class="game-card codenames-card" data-name="كود نيمز" data-description="قسّموا فريقين، اربطوا الكلمات ببعض وخلو التلميحات تقودكم للفوز." data-min-players="4" data-max-players="12">
             <div class="card-visual visual-codenames">
               <span class="game-icon" aria-hidden="true">▦</span>
               <span class="visual-label">فرق &nbsp;·&nbsp; كلمات</span>
@@ -120,14 +124,14 @@
               <span class="word-tile tile-three">سرّ</span>
             </div>
             <div class="game-info">
-              <div class="game-meta"><span>تحدّي الفرق</span><span>٤–٨ لاعبين</span></div>
+              <div class="game-meta"><span>تحدّي الفرق</span><span>٤–١٢ لاعبين</span></div>
               <h3>كود نيمز</h3>
               <p>اربطوا الكلمات ببعض، وخلو التلميحات تقود فريقكم للفوز.</p>
               <button class="game-button" type="button" data-game="كود نيمز" data-game-id="codenames">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
             </div>
           </article>
 
-          <article class="game-card guess-card" data-name="خمن واربح" data-description="خمّنوا الإجابة قبل الكل واجمعوا النقاط — كل سؤال فيه فرصة لقلب النتيجة." data-min-players="2" data-max-players="8">
+          <article class="game-card guess-card" data-name="خمن واربح" data-description="اكتبوا الإجابة بأسرع وقت؛ المترادفات تُقبل ويتأهل الأسرع حتى يبقى فائز واحد." data-min-players="2" data-max-players="12">
             <div class="card-visual visual-guess">
               <span class="game-icon" aria-hidden="true">؟</span>
               <span class="visual-label">سرعة &nbsp;·&nbsp; معلومات</span>
@@ -135,9 +139,9 @@
               <span class="guess-mark">!</span>
             </div>
             <div class="game-info">
-              <div class="game-meta"><span>مين أسرع؟</span><span>٢–٨ لاعبين</span></div>
+              <div class="game-meta"><span>مين أسرع؟</span><span>٢–١٢ لاعبين</span></div>
               <h3>خمن واربح</h3>
-              <p>خمّنوا الإجابة قبل الكل واجمعوا النقاط — كل سؤال يقلب النتيجة.</p>
+              <p>اكتبوا الإجابة بأسرع وقت؛ المترادفات تُقبل ويتأهل الأسرع حتى يبقى فائز واحد.</p>
               <button class="game-button" type="button" data-game="خمن واربح" data-game-id="guess">جهّزوا اللعبة <span aria-hidden="true">←</span></button>
             </div>
           </article>
@@ -189,13 +193,49 @@
       </form>
       <p class="dialog-note" id="dialog-note" role="status">أدخلوا بيانات مشروع Supabase لتفعيل الغرف الأونلاين.</p>
       <section class="room-lobby" id="room-lobby" aria-live="polite" hidden>
-        <div class="room-code-box"><span>رمز الغرفة</span><strong id="room-code"></strong><button id="copy-room-code" type="button">نسخ</button></div>
-        <h3>اللاعبون في الغرفة <span id="player-total"></span></h3>
-        <ul class="player-list" id="player-list"></ul>
-        <p class="lobby-message" id="lobby-message"></p>
-        <button class="primary-button start-game" id="start-game" type="button" hidden>ابدأ الجولة</button>
-        <div class="game-board" id="game-board"></div>
-        <button class="secondary-button leave-room" id="leave-room" type="button">مغادرة الغرفة</button>
+        <header class="room-screen-header">
+          <div class="room-screen-title">
+            <span class="section-kicker">غرفة ميلان</span>
+            <h2 id="room-screen-title">لعبة ميلان</h2>
+          </div>
+          <div class="room-code-box">
+            <span>رمز الغرفة</span>
+            <strong id="room-code"></strong>
+            <button id="copy-room-code" type="button">نسخ</button>
+          </div>
+        </header>
+        <p class="room-screen-notice" id="room-screen-notice" role="status" hidden></p>
+        <div class="room-screen-layout">
+          <main class="room-main-panel">
+            <section class="room-state-card">
+              <p class="lobby-message" id="lobby-message"></p>
+              <div class="room-settings" id="room-settings" hidden>
+                <p class="room-settings-title">إعدادات الجولة</p>
+                <label class="room-setting" id="outsider-setting" hidden>
+                  عدد اللاعبين خارج السالفة
+                  <select id="outsider-count"></select>
+                </label>
+                <label class="room-setting" id="quiz-round-setting" hidden>
+                  عدد الأسئلة
+                  <select id="quiz-round-count"></select>
+                </label>
+                <p class="room-setting-hint" id="room-setting-hint"></p>
+                <button class="primary-button start-game" id="start-game" type="button" hidden>ابدأ الجولة</button>
+              </div>
+              <p class="room-waiting-message" id="room-waiting-message" hidden></p>
+            </section>
+            <section class="room-game-panel" aria-live="polite">
+              <div class="game-board" id="game-board"></div>
+            </section>
+          </main>
+          <aside class="room-sidebar">
+            <section class="players-panel">
+              <h3>اللاعبون في الغرفة <span id="player-total"></span></h3>
+              <ul class="player-list" id="player-list"></ul>
+            </section>
+            <button class="secondary-button leave-room" id="leave-room" type="button">مغادرة الغرفة</button>
+          </aside>
+        </div>
       </section>
     </dialog>
   </body>
