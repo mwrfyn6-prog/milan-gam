@@ -667,3 +667,132 @@ body {
   .word-board { gap: 5px; }
   .word-card { min-height: 48px; font-size: 10px; }
 }
+
+.avatar-shell {
+  position: relative;
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #111;
+  border-radius: 50%;
+  background: #c9c9c5;
+  color: #111;
+  font-weight: 800;
+}
+.avatar-shell img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.profile-avatar { width: 31px; height: 31px; }
+.profile-avatar img[hidden] { display: none; }
+.profile-avatar-fallback[hidden] { display: none; }
+
+.room-dialog.is-in-room {
+  width: min(1200px, calc(100% - 32px));
+  max-width: 1200px;
+  height: min(860px, calc(100dvh - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.room-dialog.is-in-room > :not(.room-lobby):not(.dialog-close) { display: none; }
+.room-dialog.is-in-room .dialog-close { z-index: 2; top: 19px; left: 20px; }
+.room-dialog.is-in-room .room-lobby:not([hidden]) {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  margin: 0;
+  overflow: auto;
+}
+.room-screen-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 88px;
+  padding: 15px 64px;
+  border-bottom: 1px solid #111;
+  background: #d2d2ce;
+}
+.room-screen-notice {
+  margin: 0;
+  padding: 9px 18px;
+  border-bottom: 1px solid #999;
+  background: #c9c9c5;
+  color: #111;
+  font-size: 11px;
+}
+.room-screen-notice[hidden] { display: none; }
+.room-screen-notice.error-message { font-weight: 800; text-decoration: underline; }
+.room-screen-title .section-kicker { font-size: 10px; }
+.room-screen-title h2 { margin: 3px 0 0; font-size: 23px; }
+.room-screen-layout {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr) 285px;
+  min-height: 0;
+}
+.room-main-panel { min-width: 0; overflow: auto; }
+.room-state-card { padding: 17px 22px; border-bottom: 1px solid #aaa; }
+.room-state-card .lobby-message { margin: 0; color: #111; font-size: 14px; font-weight: 800; }
+.room-settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 15px; }
+.room-settings[hidden], .room-setting[hidden], .room-waiting-message[hidden] { display: none; }
+.room-settings-title { grid-column: 1 / -1; margin: 0; font-size: 12px; font-weight: 800; }
+.room-setting { display: grid; gap: 6px; align-content: start; font-size: 11px; font-weight: 700; }
+.room-setting-hint { align-self: center; margin: 0; color: #555; font-size: 10px; line-height: 1.6; }
+.room-settings .start-game { align-self: end; }
+.room-waiting-message { margin: 13px 0 0; color: #555; font-size: 11px; }
+.room-game-panel { padding: 4px 22px 24px; }
+.room-game-panel .game-board { max-width: 760px; margin: 18px auto 0; }
+.room-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 18px;
+  border-inline-start: 1px solid #999;
+  background: #d5d5d1;
+}
+.players-panel { min-height: 0; }
+.players-panel h3 { margin: 0 0 12px; font-size: 14px; }
+.player-list { max-height: none; }
+.player-list li { align-items: center; gap: 8px; padding: 8px; }
+.player-identity { display: flex; min-width: 0; align-items: center; gap: 8px; }
+.player-avatar { width: 32px; height: 32px; }
+.player-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player-xp { flex: 0 0 auto; color: #111; font-size: 9px; font-weight: 700; }
+.room-sidebar .leave-room { width: 100%; margin-top: auto; }
+
+@media (max-width: 700px) {
+  .room-dialog.is-in-room {
+    inset: 0;
+    width: auto;
+    max-width: none;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  .room-screen-header { min-height: 76px; gap: 10px; padding: 12px 58px; }
+  .room-dialog.is-in-room .dialog-close { top: 18px; left: 12px; }
+  .room-screen-title h2 { font-size: 18px; }
+  .room-code-box { gap: 6px; padding: 8px; }
+  .room-code-box > span { font-size: 9px; }
+  .room-code-box strong { font-size: 15px; }
+  .room-screen-layout { display: flex; flex-direction: column; overflow: auto; }
+  .room-main-panel { overflow: visible; }
+  .room-settings { grid-template-columns: 1fr; gap: 9px; }
+  .room-settings-title { grid-column: auto; }
+  .room-sidebar { gap: 10px; padding: 14px; border-top: 1px solid #999; border-inline-start: 0; }
+  .player-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .room-sidebar .leave-room { margin-top: 0; }
+  .room-game-panel { padding: 0 14px 18px; }
+}
